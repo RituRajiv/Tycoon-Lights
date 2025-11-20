@@ -9,28 +9,74 @@ load_dotenv()
 _client = None
 _authenticated_client = None
 
+def _get_env_var(key: str):
+    """Get environment variable from Streamlit secrets or os.environ"""
+    try:
+        import streamlit as st
+        from streamlit.errors import StreamlitSecretNotFoundError
+        # Try Streamlit secrets first (for Streamlit Cloud)
+        try:
+            if hasattr(st, 'secrets') and key in st.secrets:
+                return st.secrets[key]
+        except StreamlitSecretNotFoundError:
+            # Secrets file doesn't exist, fall through to os.environ
+            pass
+    except (AttributeError, RuntimeError, ImportError):
+        # Not in Streamlit context or secrets not available
+        pass
+    
+    # Fallback to os.environ (for local development with .env file)
+    return os.getenv(key)
+
+def _validate_env_vars():
+    """Validate that required environment variables are set"""
+    supabase_url = _get_env_var("SUPABASE_URL")
+    supabase_key = _get_env_var("SUPABASE_KEY")
+    
+    if not supabase_url:
+        raise ValueError(
+            "SUPABASE_URL is not configured. "
+            "For local development: Create a .env file with SUPABASE_URL=your-url. "
+            "For Streamlit Cloud: Add SUPABASE_URL to your app's Secrets (Settings → Secrets). "
+            "See README.md for setup instructions."
+        )
+    if not supabase_key:
+        raise ValueError(
+            "SUPABASE_KEY is not configured. "
+            "For local development: Create a .env file with SUPABASE_KEY=your-key. "
+            "For Streamlit Cloud: Add SUPABASE_KEY to your app's Secrets (Settings → Secrets). "
+            "See README.md for setup instructions."
+        )
+    
+    return supabase_url, supabase_key
+
+def check_supabase_config():
+    """Public function to check if Supabase is configured"""
+    try:
+        _validate_env_vars()
+        return True, None
+    except ValueError as e:
+        return False, str(e)
+
 def _get_client():
     """Get unauthenticated client (for reads)"""
     global _client
     if _client is None:
-        _client = create_client(
-            os.getenv("SUPABASE_URL"),
-            os.getenv("SUPABASE_KEY")
-        )
+        supabase_url, supabase_key = _validate_env_vars()
+        _client = create_client(supabase_url, supabase_key)
     return _client
 
 def _get_authenticated_client():
     """Get authenticated client (for writes that require RLS)"""
     global _authenticated_client
     
+    supabase_url, supabase_key = _validate_env_vars()
+    
     # Option 1: Use service role key if available (bypasses RLS)
-    service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+    service_role_key = _get_env_var("SUPABASE_SERVICE_ROLE_KEY")
     if service_role_key:
         if _authenticated_client is None:
-            _authenticated_client = create_client(
-                os.getenv("SUPABASE_URL"),
-                service_role_key
-            )
+            _authenticated_client = create_client(supabase_url, service_role_key)
         return _authenticated_client
     
     # Option 2: Use authenticated session if available
@@ -39,10 +85,7 @@ def _get_authenticated_client():
     session_data = st.session_state.get('supabase_session')
     if session_data:
         if _authenticated_client is None:
-            _authenticated_client = create_client(
-                os.getenv("SUPABASE_URL"),
-                os.getenv("SUPABASE_KEY")
-            )
+            _authenticated_client = create_client(supabase_url, supabase_key)
             # Set the session with access token and refresh token
             _authenticated_client.auth.set_session(
                 access_token=session_data.get('access_token'),
@@ -56,10 +99,8 @@ def _get_authenticated_client():
 def authenticate_user(email: str, password: str):
     """Authenticate a user and store session"""
     try:
-        supabase = create_client(
-            os.getenv("SUPABASE_URL"),
-            os.getenv("SUPABASE_KEY")
-        )
+        supabase_url, supabase_key = _validate_env_vars()
+        supabase = create_client(supabase_url, supabase_key)
         response = supabase.auth.sign_in_with_password({
             "email": email,
             "password": password
@@ -78,6 +119,9 @@ def authenticate_user(email: str, password: str):
             return True, "Authentication successful"
         else:
             return False, "Authentication failed - no session returned"
+    except ValueError as e:
+        # Environment variable validation error
+        return False, str(e)
     except Exception as e:
         return False, f"Authentication error: {str(e)}"
 

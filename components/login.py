@@ -1,7 +1,7 @@
 """Login page component"""
 
 import streamlit as st
-from supabase_client import authenticate_user
+from supabase_client import authenticate_user, check_supabase_config
 
 
 def render_login():
@@ -13,14 +13,43 @@ def render_login():
         /* Force override Streamlit's theme variables for login page */
         :root {
             --login-bg: #FFFFFF;
-            --login-text: #262730;
-            --login-text-secondary: #64748b;
+            --login-text: #000000;
+            --login-text-secondary: #000000;
+        }
+        
+        /* Override global h3 styles specifically for login form */
+        .main [data-testid="stForm"] .element-container .markdown h3,
+        .main [data-testid="stForm"] .markdown h3,
+        section[data-testid="stForm"] .markdown h3,
+        section[data-testid="stForm"] .element-container .markdown h3 {
+            color: #000000 !important;
+        }
+        
+        .main [data-testid="stForm"] .element-container .markdown p,
+        .main [data-testid="stForm"] .markdown p,
+        section[data-testid="stForm"] .markdown p,
+        section[data-testid="stForm"] .element-container .markdown p {
+            color: #000000 !important;
         }
     </style>
     """, unsafe_allow_html=True)
     
     st.markdown("""
     <style>
+        /* Force black color for all headings and text in login form */
+        .main [data-testid="stForm"] h3,
+        .main [data-testid="stForm"] h1,
+        .main [data-testid="stForm"] h2,
+        .main [data-testid="stForm"] h4,
+        .main [data-testid="stForm"] h5,
+        .main [data-testid="stForm"] h6,
+        .main [data-testid="stForm"] p,
+        .main [data-testid="stForm"] div,
+        .main [data-testid="stForm"] span,
+        .main [data-testid="stForm"] * {
+            color: #000000 !important;
+        }
+        
         /* Override global styles for login page - use very specific selectors */
         .main .element-container .stTextInput > div > div > input,
         .main [data-testid="stForm"] .stTextInput > div > div > input,
@@ -52,29 +81,32 @@ def render_login():
         .login-form-card h4,
         .login-form-card h5,
         .login-form-card h6 {
-            color: #262730 !important;
+            color: #000000 !important;
         }
         
         .login-form-card p {
-            color: #64748b !important;
+            color: #000000 !important;
         }
         
-        /* Override global typography for login form */
-        .main [data-testid="stForm"] h3,
-        .main [data-testid="stForm"] h1,
-        .main [data-testid="stForm"] h2,
-        .main [data-testid="stForm"] h4,
-        .main [data-testid="stForm"] h5,
-        .main [data-testid="stForm"] h6,
+        /* Override global typography for login form - more specific selectors */
+        section[data-testid="stForm"] h3,
+        section[data-testid="stForm"] h1,
+        section[data-testid="stForm"] h2,
+        section[data-testid="stForm"] h4,
+        section[data-testid="stForm"] h5,
+        section[data-testid="stForm"] h6,
+        section[data-testid="stForm"] p,
+        section[data-testid="stForm"] div,
+        .main section[data-testid="stForm"] h3,
+        .main section[data-testid="stForm"] h1,
+        .main section[data-testid="stForm"] h2,
+        .main section[data-testid="stForm"] p,
+        .main section[data-testid="stForm"] div,
         .login-form-card [data-testid="stForm"] h3,
         .login-form-card [data-testid="stForm"] h1,
-        .login-form-card [data-testid="stForm"] h2 {
-            color: #262730 !important;
-        }
-        
-        .main [data-testid="stForm"] p,
+        .login-form-card [data-testid="stForm"] h2,
         .login-form-card [data-testid="stForm"] p {
-            color: #64748b !important;
+            color: #000000 !important;
         }
         
         /* Ensure white card background is visible */
@@ -129,6 +161,40 @@ def render_login():
             background-color: #FFFFFF !important;
             color: #262730 !important;
         }
+        
+        /* Most specific override for markdown content in forms */
+        .main section[data-testid="stForm"] .element-container .markdown h3,
+        .main section[data-testid="stForm"] .element-container .markdown p,
+        .main section[data-testid="stForm"] .markdown h3,
+        .main section[data-testid="stForm"] .markdown p,
+        section[data-testid="stForm"] .element-container .markdown h3,
+        section[data-testid="stForm"] .element-container .markdown p,
+        section[data-testid="stForm"] .markdown h3,
+        section[data-testid="stForm"] .markdown p {
+            color: #000000 !important;
+        }
+        
+        /* Override any remaining white text in form markdown */
+        .main [data-testid="stForm"] .markdown *,
+        section[data-testid="stForm"] .markdown * {
+            color: #000000 !important;
+        }
+        
+        /* Target signin-header class specifically */
+        .signin-header,
+        .signin-header h3,
+        .signin-header p,
+        .signin-header *,
+        .main .signin-header,
+        .main .signin-header h3,
+        .main .signin-header p,
+        .main .signin-header *,
+        section[data-testid="stForm"] .signin-header,
+        section[data-testid="stForm"] .signin-header h3,
+        section[data-testid="stForm"] .signin-header p,
+        section[data-testid="stForm"] .signin-header * {
+            color: #000000 !important;
+        }
     </style>
     """, unsafe_allow_html=True)
     
@@ -140,10 +206,35 @@ def render_login():
         st.markdown("""
         <div style='text-align: center; margin-bottom: 2rem;'>
             <h1 style='font-size: 3rem; margin-bottom: 0.5rem;'>💡</h1>
-            <h1 style='color: #f1f5f9; font-weight: 700; margin-bottom: 0.5rem;'>Tycoon Lights</h1>
-            <p style='color: #cbd5e1; font-size: 1rem;'>Driver Selection & Management System</p>
+            <h1 style='color: #000000; font-weight: 700; margin-bottom: 0.5rem;'>Tycoon Lights</h1>
         </div>
         """, unsafe_allow_html=True)
+        
+        # Check Supabase configuration
+        is_configured, config_error = check_supabase_config()
+        if not is_configured:
+            st.error(f"⚠️ **Configuration Error:** {config_error}")
+            st.info("""
+            **For Streamlit Cloud Deployment:**
+            1. Go to your app's Settings (⋮ menu → Settings)
+            2. Navigate to the "Secrets" tab
+            3. Add your Supabase credentials in TOML format:
+            
+            ```toml
+            SUPABASE_URL = "your-supabase-project-url"
+            SUPABASE_KEY = "your-supabase-anon-key"
+            SUPABASE_SERVICE_ROLE_KEY = "your-service-role-key"
+            ```
+            
+            **For Local Development:**
+            Create a `.env` file in the project root with:
+            ```
+            SUPABASE_URL=your-supabase-project-url
+            SUPABASE_KEY=your-supabase-anon-key
+            SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+            ```
+            """)
+            st.stop()
         
         # Check if already logged in
         if st.session_state.get('supabase_user'):
@@ -154,16 +245,23 @@ def render_login():
                 st.rerun()
             return
         
-        # Login form card wrapper with unique class
-        st.markdown("""
-        <div class="login-form-card" style='background: #FFFFFF !important; border-radius: 12px !important; padding: 2rem !important; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important; margin: 1rem 0 !important;'>
-        """, unsafe_allow_html=True)
-        
         with st.form("login_form", clear_on_submit=False):
             st.markdown("""
-            <div style='color: #262730 !important;'>
-                <h3 style='color: #262730 !important; font-weight: 600 !important; margin-bottom: 0.5rem !important;'>🔐 Sign In</h3>
-                <p style='color: #64748b !important; margin-bottom: 1.5rem !important;'>Enter your credentials to access the system</p>
+            <style>
+                /* Force black color for Sign In heading and text - highest specificity */
+                .signin-header h3,
+                .signin-header p,
+                .signin-header *,
+                .main .signin-header h3,
+                .main .signin-header p,
+                section[data-testid="stForm"] .signin-header h3,
+                section[data-testid="stForm"] .signin-header p {
+                    color: #000000 !important;
+                }
+            </style>
+            <div class="signin-header" style='color: #000000 !important;'>
+                <h3 style='color: #000000 !important; font-weight: 600 !important; margin-bottom: 0.5rem !important;'>🔐 Sign In</h3>
+                <p style='color: #000000 !important; margin-bottom: 1.5rem !important;'>Enter your credentials to access the system</p>
             </div>
             """, unsafe_allow_html=True)
             
