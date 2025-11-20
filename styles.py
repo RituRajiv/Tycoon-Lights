@@ -16,8 +16,13 @@ def get_custom_styles():
         min-height: 100vh;
     }
     
-    /* Typography */
-    h1, h2, h3, h4, h5, h6 {
+    /* Typography - will be overridden by login form styles */
+    .main h1,
+    .main h2,
+    .main h3,
+    .main h4,
+    .main h5,
+    .main h6 {
         color: #f1f5f9 !important;
     }
     
