@@ -2,7 +2,6 @@
 
 import streamlit as st
 import os
-from pdf_generator import generate_pdf
 
 
 def render_table():
@@ -73,6 +72,8 @@ def render_table():
     with col1:
         if st.button("📄 Generate PDF", type="primary", use_container_width=True, help="Generate a PDF document from the table data"):
             try:
+                # Lazy load PDF generator only when needed
+                from pdf_generator import generate_pdf
                 with st.spinner("🔄 Generating PDF..."):
                     filename = generate_pdf(st.session_state.table_data)
                     with open(filename, "rb") as pdf_file:

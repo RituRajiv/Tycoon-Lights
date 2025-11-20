@@ -4,11 +4,10 @@ import streamlit as st
 from supabase_client import authenticate_user, check_supabase_config
 
 
-def render_login():
-    """Render the login page"""
-    # Inject styles multiple times to ensure they override Streamlit defaults
-    # Add login-specific styles with high specificity
-    st.markdown("""
+@st.cache_data
+def _get_login_styles():
+    """Get login page CSS styles (cached for performance)"""
+    return """
     <style>
         /* Force override Streamlit's theme variables for login page */
         :root {
@@ -45,11 +44,7 @@ def render_login():
         section[data-testid="stForm"] .element-container .markdown p {
             color: #FFFFFF !important;
         }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("""
-    <style>
+        
         /* Force black color for all headings and text in login form */
         .main [data-testid="stForm"] h3,
         .main [data-testid="stForm"] h1,
@@ -209,12 +204,7 @@ def render_login():
         section[data-testid="stForm"] .signin-header * {
             color: #FFFFFF !important;
         }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # Add one final style block with maximum specificity to override everything
-    st.markdown("""
-    <style>
+        
         /* Override styles.py selectors with higher specificity - must be last */
         html body .main h1,
         html body .main h2,
@@ -249,7 +239,13 @@ def render_login():
             color: #FFFFFF !important;
         }
     </style>
-    """, unsafe_allow_html=True)
+    """
+
+
+def render_login():
+    """Render the login page"""
+    # Inject cached styles
+    st.markdown(_get_login_styles(), unsafe_allow_html=True)
     
     # Center the login form
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -300,18 +296,6 @@ def render_login():
         
         with st.form("login_form", clear_on_submit=False):
             st.markdown("""
-            <style>
-                /* Force black color for Sign In heading and text - highest specificity */
-                .signin-header h3,
-                .signin-header p,
-                .signin-header *,
-                .main .signin-header h3,
-                .main .signin-header p,
-                section[data-testid="stForm"] .signin-header h3,
-                section[data-testid="stForm"] .signin-header p {
-                    color: #FFFFFF !important;
-                }
-            </style>
             <div class="signin-header" style='color: #FFFFFF !important;'>
                 <h3 style='color: #FFFFFF !important; font-weight: 600 !important; margin-bottom: 0.5rem !important;'>🔐 Sign In</h3>
                 <p style='color: #FFFFFF !important; margin-bottom: 1.5rem !important;'>Enter your credentials to access the system</p>

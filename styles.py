@@ -1,7 +1,10 @@
 """Custom CSS styles for the Streamlit app"""
 
+import streamlit as st
+
+@st.cache_data
 def get_custom_styles():
-    """Returns custom CSS as HTML string"""
+    """Returns custom CSS as HTML string (cached for performance)"""
     return """
 <style>
     /* Hide Streamlit header */

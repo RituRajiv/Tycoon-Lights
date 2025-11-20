@@ -51,10 +51,9 @@ elif current_page == "Upload PDF":
     st.stop()
 else:
     # Home page - Main functionality
-    # Fetch particulars from database
+    # Fetch particulars from database (cached)
     try:
-        with st.spinner("🔄 Loading particulars..."):
-            db_particulars = fetch_particulars()
+        db_particulars = fetch_particulars()
         if not db_particulars:
             st.error("❌ No particulars found in database. Please contact your administrator.")
             st.stop()
@@ -68,10 +67,9 @@ else:
         st.error(f"❌ Error fetching particulars: {e}")
         st.stop()
 
-    # Fetch brand names from database
+    # Fetch brand names from database (cached)
     try:
-        with st.spinner("🔄 Loading brands..."):
-            db_brands = fetch_brands()
+        db_brands = fetch_brands()
         if not db_brands:
             st.error("❌ No brands found in database. Please contact your administrator.")
             st.stop()

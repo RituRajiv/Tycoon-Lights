@@ -1,6 +1,7 @@
 """Supabase client for fetching data"""
 
 import os
+import streamlit as st
 from supabase import create_client
 from dotenv import load_dotenv
 
@@ -141,6 +142,7 @@ def fetch_data(table_name: str):
     response = supabase.table(table_name).select("*").execute()
     return response.data or []
 
+@st.cache_data(ttl=300)  # Cache for 5 minutes
 def fetch_particulars():
     """Fetch distinct particulars from the database"""
     try:
@@ -175,6 +177,7 @@ def fetch_particulars():
     except Exception as e:
         raise
 
+@st.cache_data(ttl=300)  # Cache for 5 minutes
 def fetch_brands():
     """Fetch distinct brand names from the database"""
     try:
@@ -198,6 +201,7 @@ def fetch_brands():
     except Exception as e:
         raise
 
+@st.cache_data(ttl=300)  # Cache for 5 minutes
 def fetch_brands_with_ids():
     """Fetch all brands with their IDs from the database"""
     try:
@@ -261,6 +265,7 @@ def insert_drivers_batch(drivers: list):
     except Exception as e:
         raise
 
+@st.cache_data(ttl=300)  # Cache for 5 minutes
 def fetch_drivers():
     """Fetch all drivers from the Drivers table"""
     try:
