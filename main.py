@@ -16,11 +16,107 @@ st.set_page_config(
     page_icon="💡",
     layout="wide",  # Streamlit handles mobile responsiveness automatically
     initial_sidebar_state="collapsed",
-    menu_items=None
+    menu_items={
+        'Get Help': None,
+        'Report a bug': None,
+        'About': None
+    }
 )
 
 # Apply custom styles
 st.markdown(get_custom_styles(), unsafe_allow_html=True)
+
+# Use components API for more reliable JavaScript injection
+import streamlit.components.v1 as components
+
+hide_rerun_html = """
+<script>
+(function() {
+    let isRunning = false;
+    let lastRunTime = 0;
+    const DEBOUNCE_MS = 500; // Debounce to prevent excessive calls
+    
+    function hideRerun() {
+        // Prevent concurrent executions and debounce
+        const now = Date.now();
+        if (isRunning || (now - lastRunTime) < DEBOUNCE_MS) {
+            return;
+        }
+        
+        isRunning = true;
+        lastRunTime = now;
+        
+        try {
+            // Hide entire toolbar (most efficient - single operation)
+            const toolbar = document.querySelector('[data-testid="stToolbar"]');
+            if (toolbar && toolbar.isConnected) {
+                toolbar.style.display = 'none';
+                toolbar.style.visibility = 'hidden';
+                toolbar.remove();
+            }
+            
+            // Hide header
+            const header = document.querySelector('header[data-testid="stHeader"]');
+            if (header && header.isConnected) {
+                header.style.display = 'none';
+            }
+            
+            // Only check buttons in header/toolbar area (more efficient)
+            const headerButtons = document.querySelectorAll('header button, [data-testid="stToolbar"] button');
+            headerButtons.forEach(btn => {
+                if (btn.isConnected) {
+                    btn.style.display = 'none';
+                    btn.remove();
+                }
+            });
+        } catch (e) {
+            // Silently fail to prevent console errors
+        } finally {
+            isRunning = false;
+        }
+    }
+    
+    // Run once immediately
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', hideRerun);
+    } else {
+        hideRerun();
+    }
+    
+    // Run once after a short delay
+    setTimeout(hideRerun, 100);
+    
+    // Use a more efficient MutationObserver - only watch for toolbar/header additions
+    let observerTimeout;
+    const observer = new MutationObserver(function(mutations) {
+        // Debounce observer callbacks
+        clearTimeout(observerTimeout);
+        observerTimeout = setTimeout(() => {
+            // Only check if toolbar or header was added
+            const hasToolbar = document.querySelector('[data-testid="stToolbar"]');
+            const hasHeader = document.querySelector('header[data-testid="stHeader"]');
+            if (hasToolbar || hasHeader) {
+                hideRerun();
+            }
+        }, 200);
+    });
+    
+    // Only observe direct children of body, not entire subtree (much more efficient)
+    if (document.body) {
+        observer.observe(document.body, { 
+            childList: true, 
+            subtree: false  // Changed from true - only watch direct children
+        });
+    }
+    
+    // Clean up on page unload
+    window.addEventListener('beforeunload', () => {
+        observer.disconnect();
+    });
+})();
+</script>
+"""
+components.html(hide_rerun_html, height=0)
 
 # Initialize session state
 initialize_session_state()

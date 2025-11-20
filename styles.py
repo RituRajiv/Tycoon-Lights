@@ -11,6 +11,44 @@ def get_custom_styles():
     /* Hide Streamlit header */
     header[data-testid="stHeader"] {
         display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        overflow: hidden !important;
+    }
+    
+    /* Hide rerun button and toolbar - comprehensive selectors */
+    button[title="Rerun"],
+    button[kind="header"][title="Rerun"],
+    [data-testid="stToolbar"] button[title="Rerun"],
+    .stToolbar button[title="Rerun"],
+    header button[title="Rerun"],
+    button[aria-label*="Rerun"],
+    button[aria-label*="rerun"],
+    button[title*="Rerun" i],
+    button[title*="Rerun"],
+    [data-testid="stToolbar"] > div > button:first-child,
+    [data-testid="stToolbar"] button:first-of-type,
+    [data-testid="stToolbar"] button,
+    button svg + span,
+    [data-testid="stToolbar"],
+    /* Hide all buttons in header area */
+    header button,
+    header [role="button"],
+    /* Hide toolbar container */
+    [data-testid="stToolbar"],
+    [data-testid="stToolbar"] *,
+    /* Hide any element with rerun in class or id */
+    [class*="rerun" i],
+    [id*="rerun" i],
+    /* Hide top-right corner buttons */
+    .stApp > header,
+    .stApp > header * {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
+        overflow: hidden !important;
     }
     
     /* Prevent horizontal scroll on mobile */
