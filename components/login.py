@@ -6,7 +6,19 @@ from supabase_client import authenticate_user
 
 def render_login():
     """Render the login page"""
+    # Inject styles multiple times to ensure they override Streamlit defaults
     # Add login-specific styles with high specificity
+    st.markdown("""
+    <style>
+        /* Force override Streamlit's theme variables for login page */
+        :root {
+            --login-bg: #FFFFFF;
+            --login-text: #262730;
+            --login-text-secondary: #64748b;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
     st.markdown("""
     <style>
         /* Override global styles for login page - use very specific selectors */
@@ -85,6 +97,36 @@ def render_login():
         
         /* Ensure labels are visible */
         .login-form-card label {
+            color: #262730 !important;
+        }
+        
+        /* Additional aggressive overrides for Streamlit's rendered elements */
+        div[data-baseweb="input"] input {
+            background-color: #FFFFFF !important;
+            color: #262730 !important;
+        }
+        
+        /* Target Streamlit's actual input containers */
+        section[data-testid="stForm"] .stTextInput input,
+        section[data-testid="stForm"] .stTextInput > div > div > input {
+            background-color: #FFFFFF !important;
+            color: #262730 !important;
+            border: 1px solid #d1d5db !important;
+        }
+        
+        /* Ensure all text in the form card is visible */
+        .login-form-card .element-container,
+        .login-form-card .element-container * {
+            color: inherit;
+        }
+        
+        /* Target Streamlit's baseweb components directly */
+        .login-form-card [data-baseweb="input"] {
+            background-color: #FFFFFF !important;
+        }
+        
+        .login-form-card [data-baseweb="input"] input {
+            background-color: #FFFFFF !important;
             color: #262730 !important;
         }
     </style>
