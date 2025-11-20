@@ -6,6 +6,40 @@ from supabase_client import authenticate_user
 
 def render_login():
     """Render the login page"""
+    # Add login-specific styles
+    st.markdown("""
+    <style>
+        /* Ensure text inputs are visible on login page */
+        .stTextInput > div > div > input {
+            background-color: #FFFFFF !important;
+            color: #262730 !important;
+            border: 1px solid #d1d5db !important;
+            border-radius: 8px !important;
+        }
+        
+        .stTextInput label {
+            color: #262730 !important;
+            font-weight: 500 !important;
+        }
+        
+        /* Style form elements */
+        div[data-testid="stForm"] {
+            background-color: transparent !important;
+        }
+        
+        /* Ensure Streamlit markdown text is visible in form */
+        div[data-testid="stForm"] h3,
+        div[data-testid="stForm"] h1,
+        div[data-testid="stForm"] h2 {
+            color: #262730 !important;
+        }
+        
+        div[data-testid="stForm"] p {
+            color: #64748b !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
     # Center the login form
     col1, col2, col3 = st.columns([1, 2, 1])
     
@@ -28,9 +62,14 @@ def render_login():
                 st.rerun()
             return
         
+        # Login form card wrapper
+        st.markdown("""
+        <div style='background: #FFFFFF; border-radius: 12px; padding: 2rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); margin: 1rem 0;'>
+        """, unsafe_allow_html=True)
+        
         with st.form("login_form", clear_on_submit=False):
-            st.markdown("### 🔐 Sign In")
-            st.markdown("<p style='color: #cbd5e1; margin-bottom: 1.5rem;'>Enter your credentials to access the system</p>", unsafe_allow_html=True)
+            st.markdown('<h3 style="color: #262730; font-weight: 600; margin-bottom: 0.5rem;">🔐 Sign In</h3>', unsafe_allow_html=True)
+            st.markdown('<p style="color: #64748b; margin-bottom: 1.5rem;">Enter your credentials to access the system</p>', unsafe_allow_html=True)
             
             email = st.text_input(
                 "📧 Email Address", 
@@ -66,6 +105,8 @@ def render_login():
                             st.error(f"❌ {message}")
                 else:
                     st.warning("⚠️ Please enter both email and password")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
         
         # Footer
         st.markdown("""

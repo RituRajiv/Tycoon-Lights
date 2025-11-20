@@ -41,14 +41,15 @@ def get_custom_styles():
         transform: translateY(-2px);
     }
     
-    /* Form Elements */
-    .stTextInput > div > div > input,
+    /* Form Elements - Dark theme for main app */
     .stSelectbox > div > div > select {
         background-color: #1e293b !important;
         color: #f1f5f9 !important;
         border: 1px solid #334155 !important;
         border-radius: 8px !important;
     }
+    
+    /* Login form inputs will be styled separately in login.py */
     
     /* Table Container */
     .table-container {
