@@ -14,7 +14,7 @@ from supabase_client import fetch_particulars, fetch_brands
 st.set_page_config(
     page_title="Tycoon Lights",
     page_icon="💡",
-    layout="wide",
+    layout="wide",  # Streamlit handles mobile responsiveness automatically
     initial_sidebar_state="collapsed",
     menu_items=None
 )
@@ -53,7 +53,8 @@ else:
     # Home page - Main functionality
     # Fetch particulars from database (cached)
     try:
-        db_particulars = fetch_particulars()
+        with st.spinner("Loading..."):
+            db_particulars = fetch_particulars()
         if not db_particulars:
             st.error("❌ No particulars found in database. Please contact your administrator.")
             st.stop()
@@ -65,6 +66,7 @@ else:
         )
     except Exception as e:
         st.error(f"❌ Error fetching particulars: {e}")
+        st.info("💡 **Tip:** Check your internet connection and try refreshing the page.")
         st.stop()
 
     # Fetch brand names from database (cached)
@@ -81,6 +83,7 @@ else:
         )
     except Exception as e:
         st.error(f"❌ Error fetching brands: {e}")
+        st.info("💡 **Tip:** Check your internet connection and try refreshing the page.")
         st.stop()
 
     if particular == "Drivers":

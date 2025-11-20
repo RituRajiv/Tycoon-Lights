@@ -6,10 +6,17 @@ import streamlit as st
 def get_custom_styles():
     """Returns custom CSS as HTML string (cached for performance)"""
     return """
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <style>
     /* Hide Streamlit header */
     header[data-testid="stHeader"] {
         display: none !important;
+    }
+    
+    /* Prevent horizontal scroll on mobile */
+    html, body {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
     }
     
     /* Main background */
@@ -17,6 +24,8 @@ def get_custom_styles():
         padding: 2rem;
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         min-height: 100vh;
+        width: 100% !important;
+        max-width: 100% !important;
     }
     
     /* Typography - will be overridden by login form styles */
@@ -71,7 +80,53 @@ def get_custom_styles():
     /* Mobile Responsive */
     @media (max-width: 768px) {
         .main {
-            padding: 0.5rem;
+            padding: 0.5rem !important;
+        }
+        
+        /* Ensure all containers fit mobile */
+        .block-container {
+            padding: 1rem !important;
+            max-width: 100% !important;
+        }
+        
+        /* Fix column layouts on mobile */
+        [data-testid="column"] {
+            width: 100% !important;
+            padding: 0.25rem !important;
+        }
+        
+        /* Make buttons touch-friendly */
+        .stButton > button {
+            min-height: 44px !important;
+            font-size: 16px !important;
+        }
+        
+        /* Fix selectboxes on mobile */
+        .stSelectbox {
+            width: 100% !important;
+        }
+        
+        /* Prevent text overflow */
+        * {
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+        }
+        
+        /* Fix table scrolling */
+        .table-container {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+    }
+    
+    /* Extra small devices */
+    @media (max-width: 480px) {
+        .main {
+            padding: 0.25rem !important;
+        }
+        
+        .block-container {
+            padding: 0.5rem !important;
         }
     }
 </style>

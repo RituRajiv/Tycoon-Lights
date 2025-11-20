@@ -8,6 +8,7 @@ from supabase_client import authenticate_user, check_supabase_config
 def _get_login_styles():
     """Get login page CSS styles (cached for performance)"""
     return """
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         /* Force override Streamlit's theme variables for login page */
         :root {
@@ -238,6 +239,49 @@ def _get_login_styles():
         html body .main [data-testid="stForm"] .markdown p {
             color: #FFFFFF !important;
         }
+        
+        /* Mobile Responsive - Login Page */
+        @media (max-width: 768px) {
+            .main {
+                padding: 0.5rem !important;
+            }
+            
+            .block-container {
+                padding: 0.5rem !important;
+                max-width: 100% !important;
+            }
+            
+            /* Stack login columns on mobile */
+            [data-testid="column"] {
+                width: 100% !important;
+            }
+            
+            /* Make login form full width on mobile */
+            .login-form-card {
+                padding: 1.5rem !important;
+            }
+            
+            /* Touch-friendly buttons */
+            .stButton > button {
+                min-height: 44px !important;
+                font-size: 16px !important;
+            }
+            
+            /* Fix input fields on mobile */
+            .stTextInput input {
+                font-size: 16px !important; /* Prevents zoom on iOS */
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .main {
+                padding: 0.25rem !important;
+            }
+            
+            .login-form-card {
+                padding: 1rem !important;
+            }
+        }
     </style>
     """
 
@@ -247,7 +291,8 @@ def render_login():
     # Inject cached styles
     st.markdown(_get_login_styles(), unsafe_allow_html=True)
     
-    # Center the login form
+    # Center the login form - responsive columns
+    # On mobile, col2 will take full width automatically
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col2:
