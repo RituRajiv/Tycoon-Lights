@@ -459,38 +459,29 @@ def render_driver_form(brand_name):
                     # Display custom table with buttons
                     st.markdown("<h4 style='font-size: 1rem; margin-bottom: 0.5rem;'>🎯 Driver Options</h4>", unsafe_allow_html=True)
                     
-                    # Header row with better styling - responsive widths
-                    header_cols = st.columns([0.8, 2, 0.9, 0.7, 0.7, 1, 0.6, 1.2], gap="small")
-                    headers = ["Type", "Name/Combination", "Wattage", "Volt", "Amp", "Price", "Best", "Action"]
-                    for i, header in enumerate(headers):
-                        with header_cols[i]:
-                            st.markdown(f"<strong style='font-size: 0.75rem; padding: 0; margin: 0; line-height: 0.7; white-space: nowrap;'>{header}</strong>", unsafe_allow_html=True)
-                    
-                    st.markdown("<hr style='margin: 0.1rem 0; border-color: #334155;'>", unsafe_allow_html=True)
-                    
                     # Display each row with button - responsive widths
                     for idx, option in enumerate(all_options_data):
-                        row_cols = st.columns([0.8, 2, 0.9, 0.7, 0.7, 1, 0.6, 1.2], gap="small")
+                        row_cols = st.columns([0.8, 2, 0.9, 0.7, 0.7, 0.7, 0.6, 1], gap="small")
                         
                         with row_cols[0]:
-                            st.markdown(f"<div style='font-size: 0.7rem; padding: 0; margin: 0; line-height: 0.7; white-space: nowrap;'>{option['Type']}</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div style='font-size: 1rem; padding: 0; margin: 0; line-height: 0.7; white-space: nowrap;'>{option['Type']}</div>", unsafe_allow_html=True)
                         with row_cols[1]:
-                            st.markdown(f"<div style='font-size: 0.75rem; padding: 0; margin: 0; line-height: 0.7; white-space: nowrap;'>{option['Name/Combination']}</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div style='font-size: 1rem; padding: 0; margin: 0; line-height: 0.7; white-space: nowrap;'>{option['Name/Combination']}</div>", unsafe_allow_html=True)
                         with row_cols[2]:
-                            st.markdown(f"<div style='font-size: 0.75rem; padding: 0; margin: 0; line-height: 0.7; white-space: nowrap;'>{option['Wattage']}</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div style='font-size: 1rem; padding: 0; margin: 0; line-height: 0.7; white-space: nowrap;'>{option['Wattage']}</div>", unsafe_allow_html=True)
                         with row_cols[3]:
-                            st.markdown(f"<div style='font-size: 0.75rem; padding: 0; margin: 0; line-height: 0.7; white-space: nowrap;'>{option['Volt']}</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div style='font-size: 1rem; padding: 0; margin: 0; line-height: 0.7; white-space: nowrap;'>{option['Volt']}</div>", unsafe_allow_html=True)
                         with row_cols[4]:
-                            st.markdown(f"<div style='font-size: 0.75rem; padding: 0; margin: 0; line-height: 0.7; white-space: nowrap;'>{option['Amp']}</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div style='font-size: 1rem; padding: 0; margin: 0; line-height: 0.7; white-space: nowrap;'>{option['Amp']}</div>", unsafe_allow_html=True)
                         with row_cols[5]:
-                            st.markdown(f"<div style='font-size: 0.75rem; padding: 0; margin: 0; line-height: 0.7; white-space: nowrap;'>{option['Price']}</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div style='font-size: 1rem; padding: 0; margin: 0; line-height: 0.7; white-space: nowrap;'>{option['Price']}</div>", unsafe_allow_html=True)
                         with row_cols[6]:
-                            st.markdown(f"<div style='font-size: 0.75rem; padding: 0; margin: 0; line-height: 0.7; white-space: nowrap;'>{option['Best']}</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div style='font-size: 1rem; padding: 0; margin: 0; line-height: 0.7; white-space: nowrap;'>{option['Best']}</div>", unsafe_allow_html=True)
                         with row_cols[7]:
                             button_key = f"add_to_table_{idx}_{hash(str(option))}"
-                            button_label = "➕ Add to Quotation" if option['Best'] else "Add to Quotation"
+                            button_label = "Add"
                             button_type = "primary" if option['Best'] else "secondary"
-                            if st.button(button_label, key=button_key, use_container_width=True, type=button_type):
+                            if st.button(button_label, key=button_key, use_container_width=False, type=button_type):
                                 try:
                                     # Get display length and unit for the row
                                     display_length, display_unit, _ = _get_calculation()

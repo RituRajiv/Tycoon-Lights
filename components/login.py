@@ -13,8 +13,22 @@ def render_login():
         /* Force override Streamlit's theme variables for login page */
         :root {
             --login-bg: #FFFFFF;
-            --login-text: #000000;
-            --login-text-secondary: #000000;
+            --login-text: #FFFFFF;
+            --login-text-secondary: #FFFFFF;
+        }
+        
+        /* Override Streamlit's theme text color variable */
+        .main {
+            --text-color: #FFFFFF !important;
+        }
+        
+        /* Override styles.py - must be more specific than .main h1, etc. */
+        .main h1, .main h2, .main h3, .main h4, .main h5, .main h6,
+        .main .markdown h1, .main .markdown h2, .main .markdown h3,
+        .main .markdown h4, .main .markdown h5, .main .markdown h6,
+        .main .markdown p, .main .markdown div, .main .markdown span,
+        .main p, .main div, .main span {
+            color: #FFFFFF !important;
         }
         
         /* Override global h3 styles specifically for login form */
@@ -22,14 +36,14 @@ def render_login():
         .main [data-testid="stForm"] .markdown h3,
         section[data-testid="stForm"] .markdown h3,
         section[data-testid="stForm"] .element-container .markdown h3 {
-            color: #000000 !important;
+            color: #FFFFFF !important;
         }
         
         .main [data-testid="stForm"] .element-container .markdown p,
         .main [data-testid="stForm"] .markdown p,
         section[data-testid="stForm"] .markdown p,
         section[data-testid="stForm"] .element-container .markdown p {
-            color: #000000 !important;
+            color: #FFFFFF !important;
         }
     </style>
     """, unsafe_allow_html=True)
@@ -47,7 +61,7 @@ def render_login():
         .main [data-testid="stForm"] div,
         .main [data-testid="stForm"] span,
         .main [data-testid="stForm"] * {
-            color: #000000 !important;
+            color: #FFFFFF !important;
         }
         
         /* Override global styles for login page - use very specific selectors */
@@ -81,11 +95,11 @@ def render_login():
         .login-form-card h4,
         .login-form-card h5,
         .login-form-card h6 {
-            color: #000000 !important;
+            color: #FFFFFF !important;
         }
         
         .login-form-card p {
-            color: #000000 !important;
+            color: #FFFFFF !important;
         }
         
         /* Override global typography for login form - more specific selectors */
@@ -106,7 +120,7 @@ def render_login():
         .login-form-card [data-testid="stForm"] h1,
         .login-form-card [data-testid="stForm"] h2,
         .login-form-card [data-testid="stForm"] p {
-            color: #000000 !important;
+            color: #FFFFFF !important;
         }
         
         /* Ensure white card background is visible */
@@ -171,13 +185,13 @@ def render_login():
         section[data-testid="stForm"] .element-container .markdown p,
         section[data-testid="stForm"] .markdown h3,
         section[data-testid="stForm"] .markdown p {
-            color: #000000 !important;
+            color: #FFFFFF !important;
         }
         
         /* Override any remaining white text in form markdown */
         .main [data-testid="stForm"] .markdown *,
         section[data-testid="stForm"] .markdown * {
-            color: #000000 !important;
+            color: #FFFFFF !important;
         }
         
         /* Target signin-header class specifically */
@@ -193,7 +207,46 @@ def render_login():
         section[data-testid="stForm"] .signin-header h3,
         section[data-testid="stForm"] .signin-header p,
         section[data-testid="stForm"] .signin-header * {
-            color: #000000 !important;
+            color: #FFFFFF !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Add one final style block with maximum specificity to override everything
+    st.markdown("""
+    <style>
+        /* Override styles.py selectors with higher specificity - must be last */
+        html body .main h1,
+        html body .main h2,
+        html body .main h3,
+        html body .main h4,
+        html body .main h5,
+        html body .main h6,
+        html body .main p,
+        html body .main div,
+        html body .main span,
+        html body .main .markdown h1,
+        html body .main .markdown h2,
+        html body .main .markdown h3,
+        html body .main .markdown h4,
+        html body .main .markdown h5,
+        html body .main .markdown h6,
+        html body .main .markdown p,
+        html body .main .element-container .markdown h1,
+        html body .main .element-container .markdown h2,
+        html body .main .element-container .markdown h3,
+        html body .main .element-container .markdown h4,
+        html body .main .element-container .markdown h5,
+        html body .main .element-container .markdown h6,
+        html body .main .element-container .markdown p,
+        html body .main [data-testid="stForm"] .markdown h1,
+        html body .main [data-testid="stForm"] .markdown h2,
+        html body .main [data-testid="stForm"] .markdown h3,
+        html body .main [data-testid="stForm"] .markdown h4,
+        html body .main [data-testid="stForm"] .markdown h5,
+        html body .main [data-testid="stForm"] .markdown h6,
+        html body .main [data-testid="stForm"] .markdown p {
+            color: #FFFFFF !important;
         }
     </style>
     """, unsafe_allow_html=True)
@@ -206,7 +259,7 @@ def render_login():
         st.markdown("""
         <div style='text-align: center; margin-bottom: 2rem;'>
             <h1 style='font-size: 3rem; margin-bottom: 0.5rem;'>💡</h1>
-            <h1 style='color: #000000; font-weight: 700; margin-bottom: 0.5rem;'>Tycoon Lights</h1>
+            <h1 style='color: #FFFFFF; font-weight: 700; margin-bottom: 0.5rem;'>Tycoon Lights</h1>
         </div>
         """, unsafe_allow_html=True)
         
@@ -256,12 +309,12 @@ def render_login():
                 .main .signin-header p,
                 section[data-testid="stForm"] .signin-header h3,
                 section[data-testid="stForm"] .signin-header p {
-                    color: #000000 !important;
+                    color: #FFFFFF !important;
                 }
             </style>
-            <div class="signin-header" style='color: #000000 !important;'>
-                <h3 style='color: #000000 !important; font-weight: 600 !important; margin-bottom: 0.5rem !important;'>🔐 Sign In</h3>
-                <p style='color: #000000 !important; margin-bottom: 1.5rem !important;'>Enter your credentials to access the system</p>
+            <div class="signin-header" style='color: #FFFFFF !important;'>
+                <h3 style='color: #FFFFFF !important; font-weight: 600 !important; margin-bottom: 0.5rem !important;'>🔐 Sign In</h3>
+                <p style='color: #FFFFFF !important; margin-bottom: 1.5rem !important;'>Enter your credentials to access the system</p>
             </div>
             """, unsafe_allow_html=True)
             

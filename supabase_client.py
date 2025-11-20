@@ -16,10 +16,20 @@ def _get_env_var(key: str):
         from streamlit.errors import StreamlitSecretNotFoundError
         # Try Streamlit secrets first (for Streamlit Cloud)
         try:
-            if hasattr(st, 'secrets') and key in st.secrets:
-                return st.secrets[key]
+            if hasattr(st, 'secrets') and st.secrets is not None:
+                # Check if key exists in secrets (handles both dict-like and object-like access)
+                try:
+                    if key in st.secrets:
+                        return st.secrets[key]
+                except (TypeError, AttributeError):
+                    # If secrets is not dict-like, try attribute access
+                    if hasattr(st.secrets, key):
+                        return getattr(st.secrets, key)
         except StreamlitSecretNotFoundError:
             # Secrets file doesn't exist, fall through to os.environ
+            pass
+        except (KeyError, AttributeError):
+            # Key doesn't exist in secrets, fall through to os.environ
             pass
     except (AttributeError, RuntimeError, ImportError):
         # Not in Streamlit context or secrets not available

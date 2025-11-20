@@ -14,8 +14,6 @@ def render_table():
     st.markdown("### 📊 Quotation Table")
     st.markdown("<br>", unsafe_allow_html=True)
     
-    st.markdown('<div class="table-container" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">', unsafe_allow_html=True)
-    
     # Table header row - responsive column widths
     header_cols = st.columns([0.8, 1.5, 1.2, 1, 0.8, 1, 1.5, 1, 2])
     headers = ["#", "Brand", "Length", "Voltage", "LED", "Wattage", "Driver", "Discount", "Actions"]
@@ -30,21 +28,21 @@ def render_table():
         col1, col2, col3, col4, col5, col6, col7, col8, col9 = st.columns([0.8, 1.5, 1.2, 1, 0.8, 1, 1.5, 1, 2])
         
         with col1:
-            st.markdown(f"<div style='color: #cbd5e1; font-size: 0.85rem; white-space: nowrap;'>{idx + 1}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='color: #cbd5e1; white-space: nowrap;'>{idx + 1}</div>", unsafe_allow_html=True)
         with col2:
-            st.markdown(f"<div style='color: #f1f5f9; font-size: 0.85rem; white-space: nowrap;'>{row.get('Brand', '-')}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='color: #f1f5f9; white-space: nowrap;'>{row.get('Brand', '-')}</div>", unsafe_allow_html=True)
         with col3:
-            st.markdown(f"<div style='color: #f1f5f9; font-size: 0.85rem; white-space: nowrap;'>{row.get('Length', '-')}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='color: #f1f5f9; white-space: nowrap;'>{row.get('Length', '-')}</div>", unsafe_allow_html=True)
         with col4:
-            st.markdown(f"<div style='color: #f1f5f9; font-size: 0.85rem; white-space: nowrap;'>{row.get('Voltage', '-')}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='color: #f1f5f9; white-space: nowrap;'>{row.get('Voltage', '-')}</div>", unsafe_allow_html=True)
         with col5:
-            st.markdown(f"<div style='color: #f1f5f9; font-size: 0.85rem; white-space: nowrap;'>{row.get('LED', '-')}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='color: #f1f5f9; white-space: nowrap;'>{row.get('LED', '-')}</div>", unsafe_allow_html=True)
         with col6:
-            st.markdown(f"<div style='color: #f1f5f9; font-weight: 600; font-size: 0.85rem; white-space: nowrap;'>{row.get('Wattage', '-')}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='color: #f1f5f9; font-weight: 600; white-space: nowrap;'>{row.get('Wattage', '-')}</div>", unsafe_allow_html=True)
         with col7:
-            st.markdown(f"<div style='color: #f1f5f9; font-size: 0.85rem; white-space: nowrap;'>{row.get('Driver', '-')}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='color: #f1f5f9; white-space: nowrap;'>{row.get('Driver', '-')}</div>", unsafe_allow_html=True)
         with col8:
-            st.markdown(f"<div style='color: #f1f5f9; font-size: 0.85rem; white-space: nowrap;'>{row.get('Discount', '-')}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='color: #f1f5f9; white-space: nowrap;'>{row.get('Discount', '-')}</div>", unsafe_allow_html=True)
         with col9:
             col_edit, col_del = st.columns(2)
             with col_edit:
