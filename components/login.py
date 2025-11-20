@@ -64,8 +64,9 @@ def _get_login_styles():
         .main .element-container .stTextInput > div > div > input,
         .main [data-testid="stForm"] .stTextInput > div > div > input,
         .stTextInput > div > div > input {
-            background-color: #FFFFFF !important;
-            color: #262730 !important;
+            background-color: #1e293b !important;
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
             border: 1px solid #d1d5db !important;
             border-radius: 8px !important;
             padding: 0.5rem 0.75rem !important;
@@ -75,7 +76,7 @@ def _get_login_styles():
         .main [data-testid="stForm"] .stTextInput label,
         .stTextInput label,
         .stTextInput > label {
-            color: #262730 !important;
+            color: #FFFFFF !important;
             font-weight: 500 !important;
         }
         
@@ -129,7 +130,37 @@ def _get_login_styles():
         
         /* Override any Streamlit default text colors in form */
         .login-form-card * {
-            --text-color: #262730;
+            --text-color: #FFFFFF;
+        }
+        
+        /* Force white text color for all input fields - most specific selectors */
+        .main [data-testid="stForm"] .stTextInput > div > div > input[type="text"],
+        .main [data-testid="stForm"] .stTextInput > div > div > input[type="email"],
+        .main [data-testid="stForm"] .stTextInput > div > div > input[type="password"],
+        section[data-testid="stForm"] .stTextInput > div > div > input[type="text"],
+        section[data-testid="stForm"] .stTextInput > div > div > input[type="email"],
+        section[data-testid="stForm"] .stTextInput > div > div > input[type="password"],
+        .main .stTextInput > div > div > input[type="text"],
+        .main .stTextInput > div > div > input[type="email"],
+        .main .stTextInput > div > div > input[type="password"] {
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
+        }
+        
+        /* Target placeholder text */
+        .main [data-testid="stForm"] .stTextInput input::placeholder,
+        section[data-testid="stForm"] .stTextInput input::placeholder,
+        .main .stTextInput input::placeholder {
+            color: rgba(255, 255, 255, 0.6) !important;
+            opacity: 0.6 !important;
+        }
+        
+        /* Target all input elements with even more specificity */
+        .main [data-testid="stForm"] div[data-baseweb="input"] input,
+        section[data-testid="stForm"] div[data-baseweb="input"] input,
+        .main div[data-baseweb="input"] input {
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
         }
         
         /* Style help text */
@@ -139,20 +170,22 @@ def _get_login_styles():
         
         /* Ensure labels are visible */
         .login-form-card label {
-            color: #262730 !important;
+            color: #FFFFFF !important;
         }
         
         /* Additional aggressive overrides for Streamlit's rendered elements */
         div[data-baseweb="input"] input {
-            background-color: #FFFFFF !important;
-            color: #262730 !important;
+            background-color: #1e293b !important;
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
         }
         
         /* Target Streamlit's actual input containers */
         section[data-testid="stForm"] .stTextInput input,
         section[data-testid="stForm"] .stTextInput > div > div > input {
-            background-color: #FFFFFF !important;
-            color: #262730 !important;
+            background-color: #1e293b !important;
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
             border: 1px solid #d1d5db !important;
         }
         
@@ -164,12 +197,13 @@ def _get_login_styles():
         
         /* Target Streamlit's baseweb components directly */
         .login-form-card [data-baseweb="input"] {
-            background-color: #FFFFFF !important;
+            background-color: #1e293b !important;
         }
         
         .login-form-card [data-baseweb="input"] input {
-            background-color: #FFFFFF !important;
-            color: #262730 !important;
+            background-color: #1e293b !important;
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
         }
         
         /* Most specific override for markdown content in forms */
