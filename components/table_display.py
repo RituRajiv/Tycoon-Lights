@@ -5,20 +5,35 @@ import os
 
 
 def render_table():
-    """Render the data table with edit/delete buttons and PDF export"""
+    """Render the data table with edit/delete buttons and PDF export - optimized for mobile"""
     if not st.session_state.table_data:
         return
     
     st.markdown("### 📊 Quotation Table")
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Table header
-    header_cols = st.columns([0.8, 1.5, 1.2, 1, 0.8, 1, 1.5, 1, 2])
+    # Table header - simplified for mobile
     st.markdown("<hr style='margin: 0.5rem 0; border-color: #334155;'>", unsafe_allow_html=True)
     
-    # Table rows
-    for idx, row in enumerate(st.session_state.table_data):
-        col1, col2, col3, col4, col5, col6, col7, col8, col9 = st.columns([0.8, 1.5, 1.2, 1, 0.8, 1, 1.5, 1, 2])
+    # Table rows - limit initial render for mobile performance
+    table_data = st.session_state.table_data
+    # Calculate total price
+    total_price = 0
+    for row in table_data:
+        price_value = row.get('Price', 0)
+        if isinstance(price_value, (int, float)):
+            total_price += price_value
+        elif price_value and price_value != '-':
+            # Try to parse if it's a string
+            try:
+                price_str = str(price_value).replace('₹', '').replace(',', '').strip()
+                total_price += float(price_str)
+            except (ValueError, AttributeError):
+                pass
+    
+    # Show all rows but optimize rendering
+    for idx, row in enumerate(table_data):
+        col1, col2, col3, col4, col5, col6, col7, col8, col9 = st.columns([0.3, 1.8, 0.6, 0.5, 0.6, 0.6, 1.8, 0.6, 2])
         
         with col1:
             st.markdown(f"<div style='color: #cbd5e1; white-space: nowrap;'>{idx + 1}</div>", unsafe_allow_html=True)
@@ -41,22 +56,31 @@ def render_table():
         with col7:
             st.markdown(f"<div style='color: #f1f5f9; white-space: nowrap;'>{row.get('Driver', '-')}</div>", unsafe_allow_html=True)
         with col8:
-            discount_value = row.get('Discount', '-')
-            # Format discount with rupee symbol
-            if discount_value != '-' and discount_value and str(discount_value).strip():
-                discount_str = str(discount_value).strip()
-                # Remove existing rupee symbols
-                discount_str = discount_str.replace('₹', '').replace('Rs', '').replace('rs', '').strip()
+            # Display price
+            price_value = row.get('Price', 0)
+            price_display = '-'
+            
+            # Handle numeric prices
+            if isinstance(price_value, (int, float)):
+                if price_value > 0:
+                    price_display = f"₹{price_value:,.2f}".rstrip('0').rstrip('.')
+                elif price_value == 0:
+                    price_display = '₹0'
+            # Handle string prices (e.g., "₹123.45" or "-")
+            elif price_value and price_value != '-':
                 try:
-                    # Format as number
-                    discount_num = float(discount_str.replace(',', ''))
-                    discount_display = f"₹{discount_num:,.2f}".rstrip('0').rstrip('.')
+                    # Remove rupee symbol and extract numeric value
+                    price_str = str(price_value).replace('₹', '').replace(',', '').strip()
+                    if price_str:
+                        parsed_price = float(price_str)
+                        if parsed_price > 0:
+                            price_display = f"₹{parsed_price:,.2f}".rstrip('0').rstrip('.')
+                        else:
+                            price_display = '₹0'
                 except (ValueError, AttributeError):
-                    # Add rupee symbol if not a number
-                    discount_display = f"₹{discount_str}"
-            else:
-                discount_display = discount_value
-            st.markdown(f"<div style='color: #f1f5f9; white-space: nowrap;'>{discount_display}</div>", unsafe_allow_html=True)
+                    pass
+            
+            st.markdown(f"<div style='color: #f1f5f9; white-space: nowrap;'>{price_display}</div>", unsafe_allow_html=True)
         with col9:
             col_edit, col_del = st.columns(2)
             with col_edit:
@@ -73,6 +97,29 @@ def render_table():
         
         if idx < len(st.session_state.table_data) - 1:
             st.markdown("<hr style='margin: 0.5rem 0; border-color: #334155;'>", unsafe_allow_html=True)
+    
+    # Add total price row
+    if table_data:
+        st.markdown("<hr style='margin: 0.5rem 0; border-color: #64748b; border-width: 2px;'>", unsafe_allow_html=True)
+        col1, col2, col3, col4, col5, col6, col7, col8, col9 = st.columns([0.3, 1.8, 0.6, 0.5, 0.6, 0.6, 1.8, 0.6, 2])
+        
+        with col1:
+            st.markdown(f"<div style='color: #cbd5e1; white-space: nowrap;'></div>", unsafe_allow_html=True)
+        with col2:
+            st.markdown(f"<div style='color: #f1f5f9; font-weight: 700; white-space: nowrap;'>Total</div>", unsafe_allow_html=True)
+        with col3:
+            st.markdown(f"<div style='color: #f1f5f9; white-space: nowrap;'></div>", unsafe_allow_html=True)
+        with col4:
+            st.markdown(f"<div style='color: #f1f5f9; white-space: nowrap;'></div>", unsafe_allow_html=True)
+        with col5:
+            st.markdown(f"<div style='color: #f1f5f9; white-space: nowrap;'></div>", unsafe_allow_html=True)
+        with col6:
+            st.markdown(f"<div style='color: #f1f5f9; white-space: nowrap;'></div>", unsafe_allow_html=True)
+        with col7:
+            st.markdown(f"<div style='color: #f1f5f9; white-space: nowrap;'></div>", unsafe_allow_html=True)
+        with col8:
+            total_display = f"₹{total_price:,.2f}".rstrip('0').rstrip('.')
+            st.markdown(f"<div style='color: #fbbf24; font-weight: 700; font-size: 1.1rem; white-space: nowrap;'>{total_display}</div>", unsafe_allow_html=True)
     
     st.markdown("<br>", unsafe_allow_html=True)
     

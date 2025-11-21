@@ -10,7 +10,7 @@ from components.pdf_upload import render_pdf_upload
 from components.login import render_login
 from supabase_client import fetch_particulars, fetch_brands, authenticate_user
 
-# Page configuration
+# Page configuration - optimized for mobile
 st.set_page_config(
     page_title="Tycoon Lights",
     page_icon="💡",
@@ -22,95 +22,57 @@ st.set_page_config(
         'About': None
     }
 )
+# Optimize for mobile - reduce initial render complexity
+if 'mobile_optimized' not in st.session_state:
+    st.session_state.mobile_optimized = True
 
 # Apply custom styles
 st.markdown(get_custom_styles(), unsafe_allow_html=True)
 
-# JavaScript injection for hiding rerun button
+# JavaScript injection for hiding rerun button - optimized for mobile
 import streamlit.components.v1 as components
 
 hide_rerun_html = """
 <script>
 (function() {
-    let isRunning = false;
-    let lastRunTime = 0;
-    const DEBOUNCE_MS = 500; // Debounce to prevent excessive calls
+    'use strict';
+    let executed = false;
+    const MAX_RETRIES = 3;
+    let retryCount = 0;
     
     function hideRerun() {
-        // Prevent concurrent executions
-        const now = Date.now();
-        if (isRunning || (now - lastRunTime) < DEBOUNCE_MS) {
-            return;
-        }
-        
-        isRunning = true;
-        lastRunTime = now;
+        if (executed && retryCount >= MAX_RETRIES) return;
         
         try {
-            // Hide toolbar
             const toolbar = document.querySelector('[data-testid="stToolbar"]');
-            if (toolbar && toolbar.isConnected) {
+            if (toolbar) {
                 toolbar.style.display = 'none';
-                toolbar.style.visibility = 'hidden';
                 toolbar.remove();
             }
             
-            // Hide header
             const header = document.querySelector('header[data-testid="stHeader"]');
-            if (header && header.isConnected) {
+            if (header) {
                 header.style.display = 'none';
             }
             
-            // Hide header/toolbar buttons
-            const headerButtons = document.querySelectorAll('header button, [data-testid="stToolbar"] button');
-            headerButtons.forEach(btn => {
-                if (btn.isConnected) {
-                    btn.style.display = 'none';
-                    btn.remove();
-                }
-            });
+            const headerButtons = document.querySelectorAll('header button');
+            headerButtons.forEach(btn => btn.remove());
+            
+            executed = true;
         } catch (e) {
-            // Silently fail
-        } finally {
-            isRunning = false;
+            retryCount++;
+            if (retryCount < MAX_RETRIES) {
+                setTimeout(hideRerun, 200);
+            }
         }
     }
     
-    // Run immediately
+    // Run once after DOM is ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', hideRerun);
+        document.addEventListener('DOMContentLoaded', hideRerun, { once: true });
     } else {
-        hideRerun();
+        setTimeout(hideRerun, 50);
     }
-    
-    // Run after delay
-    setTimeout(hideRerun, 100);
-    
-    // Watch for toolbar/header additions
-    let observerTimeout;
-    const observer = new MutationObserver(function(mutations) {
-        clearTimeout(observerTimeout);
-        observerTimeout = setTimeout(() => {
-            const hasToolbar = document.querySelector('[data-testid="stToolbar"]');
-            const hasHeader = document.querySelector('header[data-testid="stHeader"]');
-            if (hasToolbar || hasHeader) {
-                hideRerun();
-            }
-        }, 200);
-    });
-    
-    // Observe direct children only
-    if (document.body) {
-        observer.observe(document.body, { 
-            childList: true, 
-            subtree: false
-        });
-    }
-    
-    // Clean up on unload
-    window.addEventListener('beforeunload', () => {
-        observer.disconnect();
-    });
 })();
 </script>
 """
@@ -155,10 +117,10 @@ elif current_page == "Upload PDF":
     st.stop()
 else:
     # Home page
-    # Fetch particulars (cached)
+    # Fetch particulars (cached) - optimized for mobile
     try:
-        with st.spinner("Loading..."):
-            db_particulars = fetch_particulars()
+        # Only show spinner if data is not cached (first load)
+        db_particulars = fetch_particulars()
         if not db_particulars:
             st.error("❌ No particulars found in database. Please contact your administrator.")
             st.stop()
@@ -173,7 +135,7 @@ else:
         st.info("💡 **Tip:** Check your internet connection and try refreshing the page.")
         st.stop()
 
-    # Fetch brands (cached)
+    # Fetch brands (cached) - optimized for mobile
     try:
         db_brands = fetch_brands()
         if not db_brands:

@@ -504,8 +504,8 @@ def render_driver_form(brand_name, location_type):
     
     if should_show_drivers:
         try:
-            with st.spinner("Fetching drivers from database..."):
-                all_drivers = fetch_drivers(location_type)
+            # Use cached data - spinner only shows if cache miss
+            all_drivers = fetch_drivers(location_type)
             
             if all_drivers:
                 nearby_drivers = _filter_nearby_drivers(all_drivers, cached_wattage, cached_voltage, max_percentage_diff=50)
@@ -566,14 +566,17 @@ def render_driver_form(brand_name, location_type):
                         all_options_data.append(option_entry)
                 
                 # Search for combinations (always, even if no single drivers)
+                # Limit combinations on mobile for better performance
                 if matching_voltage_drivers:
+                    # Reduce max combinations on mobile devices
+                    max_combo_limit = 5  # Reduced from 10 for mobile performance
                     combinations = _find_driver_combinations(
                         matching_voltage_drivers, 
                         cached_wattage, 
                         cached_voltage,
                         location_type,
                         single_driver_available=single_driver_available,
-                        max_combinations=10
+                        max_combinations=max_combo_limit
                     )
                     
                     for idx, combo in enumerate(combinations, 1):
@@ -649,6 +652,18 @@ def render_driver_form(brand_name, location_type):
                                         if 'table_data' not in st.session_state:
                                             st.session_state.table_data = []
                                         
+                                        # Extract price from option['Price'] (format: "₹123.45" or "-")
+                                        price_value = 0
+                                        price_str = option.get('Price', '-')
+                                        if price_str and price_str != '-':
+                                            # Remove rupee symbol and extract numeric value
+                                            price_clean = str(price_str).replace('₹', '').replace(',', '').strip()
+                                            if price_clean:  # Only parse if there's actual content
+                                                try:
+                                                    price_value = float(price_clean)
+                                                except (ValueError, AttributeError):
+                                                    price_value = 0
+                                        
                                         row_data = {
                                             "Brand": brand_name or "-",
                                             "Length": f"{display_length} {display_unit}",
@@ -656,6 +671,7 @@ def render_driver_form(brand_name, location_type):
                                             "LED": led_count,
                                             "Wattage": option['Wattage'],
                                             "Driver": option['Name/Combination'],
+                                            "Price": price_value,
                                             "Discount": discount or "-"
                                         }
                                         
