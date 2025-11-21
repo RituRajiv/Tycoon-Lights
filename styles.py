@@ -7,6 +7,57 @@ def get_custom_styles():
     """Returns custom CSS as HTML string (cached for performance)"""
     return """
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Permissions-Policy" content="accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), clipboard-write=(), document-domain=(), encrypted-media=(), gyroscope=(), layout-animations=(), legacy-image-formats=(), magnetometer=(), midi=(), oversized-images=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), sync-xhr=(), usb=(), vr=(), wake-lock=(), xr-spatial-tracking=()">
+<script>
+(function() {
+    'use strict';
+    
+    // Suppress Feature Policy warnings (deprecated API)
+    const originalWarn = console.warn;
+    console.warn = function(...args) {
+        const message = args.join(' ');
+        if (message.includes('Feature Policy: Skipping unsupported feature name')) {
+            return; // Suppress Feature Policy warnings
+        }
+        if (message.includes('Some cookies are misusing the recommended "SameSite" attribute')) {
+            return; // Suppress SameSite cookie warnings
+        }
+        if (message.includes('preloaded with link preload was not used')) {
+            return; // Suppress preload warnings
+        }
+        if (message.includes('iframe which has both allow-scripts and allow-same-origin')) {
+            return; // Suppress iframe sandbox warnings
+        }
+        originalWarn.apply(console, args);
+    };
+    
+    // Suppress WebSocket onclose errors (non-critical)
+    const originalError = console.error;
+    console.error = function(...args) {
+        const message = args.join(' ');
+        if (message.includes('WebSocket') && message.includes('onclose')) {
+            return; // Suppress WebSocket onclose errors
+        }
+        originalError.apply(console, args);
+    };
+    
+    // Handle WebSocket errors gracefully
+    window.addEventListener('error', function(e) {
+        if (e.message && e.message.includes('WebSocket')) {
+            e.preventDefault();
+            return false;
+        }
+    }, true);
+    
+    // Suppress unhandled promise rejections from WebSocket
+    window.addEventListener('unhandledrejection', function(e) {
+        if (e.reason && typeof e.reason === 'string' && e.reason.includes('WebSocket')) {
+            e.preventDefault();
+            return false;
+        }
+    });
+})();
+</script>
 <style>
     /* Hide Streamlit header */
     header[data-testid="stHeader"] {
