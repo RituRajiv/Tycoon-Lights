@@ -515,9 +515,9 @@ def render_driver_form(brand_name, location_type):
                 
                 calc_length = st.session_state.get('calc_converted_length', 0)
                 requires_multiple_drivers = False
-                if cached_voltage == 12 and calc_length > 5:
+                if cached_voltage == 12 and calc_length > 10:
                     requires_multiple_drivers = True
-                elif cached_voltage == 24 and calc_length > 10:
+                elif cached_voltage == 24 and calc_length > 15:
                     requires_multiple_drivers = True
                 
                 # Get matching voltage drivers for combination search

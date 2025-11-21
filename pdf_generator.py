@@ -15,7 +15,7 @@ def generate_pdf(data, filename="output.pdf"):
     header_style = ParagraphStyle('Header', parent=styles['Heading1'],
                                    fontSize=24, textColor=colors.HexColor('#1e293b'),
                                    spaceAfter=30, alignment=1, fontName='Helvetica-Bold')
-    elements.append(Paragraph("💡 Tycoon Lights", header_style))
+    elements.append(Paragraph("Tycoon Lights", header_style))
     
     # Subtitle
     subtitle_style = ParagraphStyle('Subtitle', parent=styles['Normal'],
@@ -34,8 +34,40 @@ def generate_pdf(data, filename="output.pdf"):
     # Table
     if data:
         df = pd.DataFrame(data)
+        
+        # Calculate total price
+        total_price = 0
+        price_col_idx = None
+        
+        # Find Price column index
+        if 'Price' in df.columns:
+            price_col_idx = df.columns.get_loc('Price')
+            for row in data:
+                price_value = row.get('Price', 0)
+                if isinstance(price_value, (int, float)):
+                    total_price += price_value
+                elif price_value and price_value != '-':
+                    try:
+                        price_str = str(price_value).replace('₹', '').replace(',', '').strip()
+                        total_price += float(price_str)
+                    except (ValueError, AttributeError):
+                        pass
+        
+        # Build table data with total row
         table_data = [df.columns.tolist()] + df.values.tolist()
+        
+        # Add total row
+        total_row = [''] * len(df.columns)
+        total_row[0] = 'Total'
+        if price_col_idx is not None:
+            total_display = f"{total_price:,.2f}".rstrip('0').rstrip('.')
+            total_row[price_col_idx] = total_display
+        
+        table_data.append(total_row)
+        
         table = Table(table_data)
+        total_row_idx = len(table_data) - 1
+        
         table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e293b')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -44,11 +76,18 @@ def generate_pdf(data, filename="output.pdf"):
             ('FONTSIZE', (0, 0), (-1, 0), 11),
             ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
             ('TOPPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#f8fafc')),
-            ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#1e293b')),
-            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('BACKGROUND', (0, 1), (-1, total_row_idx - 1), colors.HexColor('#f8fafc')),
+            ('TEXTCOLOR', (0, 1), (-1, total_row_idx - 1), colors.HexColor('#1e293b')),
+            ('FONTSIZE', (0, 1), (-1, total_row_idx - 1), 9),
+            # Total row styling
+            ('BACKGROUND', (0, total_row_idx), (-1, total_row_idx), colors.HexColor('#fbbf24')),
+            ('TEXTCOLOR', (0, total_row_idx), (-1, total_row_idx), colors.HexColor('#1e293b')),
+            ('FONTNAME', (0, total_row_idx), (-1, total_row_idx), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, total_row_idx), (-1, total_row_idx), 10),
+            ('BOTTOMPADDING', (0, total_row_idx), (-1, total_row_idx), 12),
+            ('TOPPADDING', (0, total_row_idx), (-1, total_row_idx), 12),
             ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#cbd5e1')),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f1f5f9')]),
+            ('ROWBACKGROUNDS', (0, 1), (-1, total_row_idx - 1), [colors.white, colors.HexColor('#f1f5f9')]),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ]))
         elements.append(table)
