@@ -416,8 +416,6 @@ def render_login():
                 else:
                     st.warning("⚠️ Please enter both email and password")
         
-        st.markdown('</div>', unsafe_allow_html=True)
-        
         # Footer
         st.markdown("""
         <div style='text-align: center; margin-top: 2rem; color: #64748b; font-size: 0.875rem;'>

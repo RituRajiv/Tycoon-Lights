@@ -4,20 +4,16 @@ import streamlit as st
 
 
 def render_navigation():
-    """Render navigation bar with menu items - only shown when logged in"""
-    # Check authentication - navigation should only be rendered when logged in
+    """Render navigation bar with menu items"""
     is_logged_in = st.session_state.get('supabase_user') is not None
-    if not is_logged_in:
-        return  # Don't render navigation if not logged in
-    
     current_page = st.session_state.get('current_page', 'Home')
     
-    # Get user email for display
+    # Get user email
     user_email = None
     if st.session_state.get('supabase_user'):
         user_email = getattr(st.session_state.supabase_user, 'email', 'User')
     
-    # Responsive navigation columns - stack on mobile
+    # Navigation columns
     nav_cols = st.columns([2, 1, 1, 1, 1.5], gap="small")
     
     with nav_cols[0]:
@@ -45,19 +41,23 @@ def render_navigation():
             st.rerun()
     
     with nav_cols[4]:
-        col_user, col_logout = st.columns([2, 1])
-        with col_user:
-            if user_email:
-                st.markdown(f"""
-                <div style='display: flex; align-items: center; height: 100%; padding: 0.5rem 0;'>
-                    <small style='color: #cbd5e1; font-size: 0.75rem;'>👤 {user_email.split("@")[0]}</small>
-                </div>
-                """, unsafe_allow_html=True)
-        with col_logout:
-            if st.button("Logout", use_container_width=True, key="nav_logout", help="Logout", type="secondary"):
-                from components.login import logout_user
-                logout_user()
+        if is_logged_in:
+            col_user, col_logout = st.columns([2, 1])
+            with col_user:
+                if user_email:
+                    st.markdown(f"""
+                    <div style='display: flex; align-items: center; height: 100%; padding: 0.5rem 0;'>
+                        <small style='color: #cbd5e1; font-size: 0.75rem;'>👤 {user_email.split("@")[0]}</small>
+                    </div>
+                    """, unsafe_allow_html=True)
+            with col_logout:
+                if st.button("Logout", use_container_width=True, key="nav_logout", help="Logout", type="secondary"):
+                    from components.login import logout_user
+                    logout_user()
+                    st.rerun()
+        else:
+            button_type = "primary" if current_page == "Login" else "secondary"
+            if st.button("🔐 Login", use_container_width=True, key="nav_login", type=button_type):
+                st.session_state.current_page = "Login"
                 st.rerun()
-    
-    st.markdown('</div>', unsafe_allow_html=True)
 

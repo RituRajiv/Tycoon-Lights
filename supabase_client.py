@@ -142,22 +142,37 @@ def fetch_data(table_name: str):
     response = supabase.table(table_name).select("*").execute()
     return response.data or []
 
-@st.cache_data(ttl=300)  # Cache for 5 minutes
+@st.cache_data(ttl=300, show_spinner=False)  # Cache for 5 minutes, hide spinner
 def fetch_particulars():
     """Fetch distinct particulars from the database"""
     try:
         supabase = _get_client()
+        # Use select('*') to handle different column name variations
+        # The fallback logic below will find the correct column
         response = supabase.table('Particulars').select('*').execute()
         
         if hasattr(response, 'error') and response.error:
             raise Exception(f"Supabase error: {response.error}")
         
         if response.data and len(response.data) > 0:
-            # Extract values from the 'Particulars' column (or any string column except 'id')
+            # Extract values from the 'Particulars' column (or fallback to any string column)
             particulars_list = []
             for item in response.data:
+                # Try common column name variations
                 if 'Particulars' in item:
                     value = item.get('Particulars')
+                    if value:
+                        particulars_list.append(str(value))
+                elif 'particulars' in item:
+                    value = item.get('particulars')
+                    if value:
+                        particulars_list.append(str(value))
+                elif 'name' in item:
+                    value = item.get('name')
+                    if value:
+                        particulars_list.append(str(value))
+                elif 'Name' in item:
+                    value = item.get('Name')
                     if value:
                         particulars_list.append(str(value))
                 else:
@@ -177,11 +192,13 @@ def fetch_particulars():
     except Exception as e:
         raise
 
-@st.cache_data(ttl=300)  # Cache for 5 minutes
+@st.cache_data(ttl=300, show_spinner=False)  # Cache for 5 minutes, hide spinner
 def fetch_brands():
     """Fetch distinct brand names from the database"""
     try:
         supabase = _get_client()
+        # Use select('*') to handle different column name variations
+        # The fallback logic below will find the correct column
         response = supabase.table('Brand').select('*').execute()
         
         if hasattr(response, 'error') and response.error:
@@ -189,9 +206,17 @@ def fetch_brands():
         
         brands_list = []
         for item in response.data or []:
+            # Try common column name variations
             if 'Brand' in item and item['Brand']:
                 brands_list.append(str(item['Brand']))
+            elif 'brand' in item and item['brand']:
+                brands_list.append(str(item['brand']))
+            elif 'name' in item and item['name']:
+                brands_list.append(str(item['name']))
+            elif 'Name' in item and item['Name']:
+                brands_list.append(str(item['Name']))
             else:
+                # Fallback: find any string column except 'id'
                 for key, value in item.items():
                     if key.lower() != 'id' and isinstance(value, str) and value:
                         brands_list.append(str(value))
@@ -265,16 +290,33 @@ def insert_drivers_batch(drivers: list):
     except Exception as e:
         raise
 
-@st.cache_data(ttl=300)  # Cache for 5 minutes
-def fetch_drivers():
-    """Fetch all drivers from the Drivers table"""
+@st.cache_data(ttl=300, show_spinner=False)  # Cache for 5 minutes, hide spinner
+def fetch_drivers(location_type: str = "both"):
+    """Fetch drivers from the Drivers table, filtered by location type if specified"""
     try:
         supabase = _get_client()
-        response = supabase.table('Drivers').select('*').execute()
+        # Select only needed columns for better performance, including Place column
+        response = supabase.table('Drivers').select('Name,Volt,Watt,Amp,Price,Bid,Place').execute()
         
         if hasattr(response, 'error') and response.error:
             raise Exception(f"Supabase error: {response.error}")
         
-        return response.data or []
+        all_drivers = response.data or []
+        
+        # Filter by location type if not "both" (case-insensitive matching)
+        if location_type == "both":
+            return all_drivers
+        
+        # Filter drivers by Place column (case-insensitive)
+        filtered_drivers = []
+        location_type_lower = location_type.lower()
+        
+        for driver in all_drivers:
+            driver_place = driver.get('Place') or driver.get('place') or ''
+            # Case-insensitive comparison
+            if driver_place.lower() == location_type_lower:
+                filtered_drivers.append(driver)
+        
+        return filtered_drivers
     except Exception as e:
         raise

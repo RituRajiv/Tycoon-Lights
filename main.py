@@ -8,13 +8,13 @@ from components.driver_form import render_driver_form
 from components.table_display import render_table
 from components.pdf_upload import render_pdf_upload
 from components.login import render_login
-from supabase_client import fetch_particulars, fetch_brands
+from supabase_client import fetch_particulars, fetch_brands, authenticate_user
 
-# Page configuration for mobile and desktop
+# Page configuration
 st.set_page_config(
     page_title="Tycoon Lights",
     page_icon="💡",
-    layout="wide",  # Streamlit handles mobile responsiveness automatically
+    layout="wide",
     initial_sidebar_state="collapsed",
     menu_items={
         'Get Help': None,
@@ -26,7 +26,7 @@ st.set_page_config(
 # Apply custom styles
 st.markdown(get_custom_styles(), unsafe_allow_html=True)
 
-# Use components API for more reliable JavaScript injection
+# JavaScript injection for hiding rerun button
 import streamlit.components.v1 as components
 
 hide_rerun_html = """
@@ -37,7 +37,7 @@ hide_rerun_html = """
     const DEBOUNCE_MS = 500; // Debounce to prevent excessive calls
     
     function hideRerun() {
-        // Prevent concurrent executions and debounce
+        // Prevent concurrent executions
         const now = Date.now();
         if (isRunning || (now - lastRunTime) < DEBOUNCE_MS) {
             return;
@@ -47,7 +47,7 @@ hide_rerun_html = """
         lastRunTime = now;
         
         try {
-            // Hide entire toolbar (most efficient - single operation)
+            // Hide toolbar
             const toolbar = document.querySelector('[data-testid="stToolbar"]');
             if (toolbar && toolbar.isConnected) {
                 toolbar.style.display = 'none';
@@ -61,7 +61,7 @@ hide_rerun_html = """
                 header.style.display = 'none';
             }
             
-            // Only check buttons in header/toolbar area (more efficient)
+            // Hide header/toolbar buttons
             const headerButtons = document.querySelectorAll('header button, [data-testid="stToolbar"] button');
             headerButtons.forEach(btn => {
                 if (btn.isConnected) {
@@ -70,29 +70,27 @@ hide_rerun_html = """
                 }
             });
         } catch (e) {
-            // Silently fail to prevent console errors
+            // Silently fail
         } finally {
             isRunning = false;
         }
     }
     
-    // Run once immediately
+    // Run immediately
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', hideRerun);
     } else {
         hideRerun();
     }
     
-    // Run once after a short delay
+    // Run after delay
     setTimeout(hideRerun, 100);
     
-    // Use a more efficient MutationObserver - only watch for toolbar/header additions
+    // Watch for toolbar/header additions
     let observerTimeout;
     const observer = new MutationObserver(function(mutations) {
-        // Debounce observer callbacks
         clearTimeout(observerTimeout);
         observerTimeout = setTimeout(() => {
-            // Only check if toolbar or header was added
             const hasToolbar = document.querySelector('[data-testid="stToolbar"]');
             const hasHeader = document.querySelector('header[data-testid="stHeader"]');
             if (hasToolbar || hasHeader) {
@@ -101,15 +99,15 @@ hide_rerun_html = """
         }, 200);
     });
     
-    // Only observe direct children of body, not entire subtree (much more efficient)
+    // Observe direct children only
     if (document.body) {
         observer.observe(document.body, { 
             childList: true, 
-            subtree: false  // Changed from true - only watch direct children
+            subtree: false
         });
     }
     
-    // Clean up on page unload
+    // Clean up on unload
     window.addEventListener('beforeunload', () => {
         observer.disconnect();
     });
@@ -121,33 +119,43 @@ components.html(hide_rerun_html, height=0)
 # Initialize session state
 initialize_session_state()
 
-# Check authentication status
+# Check auth status
 is_logged_in = st.session_state.get('supabase_user') is not None
 current_page = st.session_state.get('current_page', 'Home')
 
-# If not logged in, only allow access to login page
-if not is_logged_in:
-    if current_page != "Login":
-        st.session_state.current_page = "Login"
-        st.rerun()
-    # Render login page without navigation
-    render_login()
-    st.stop()
-
-# User is logged in - render navigation bar
+# Render navigation
 render_navigation()
 
-# Handle page navigation (only accessible when logged in)
+# Handle page navigation
 if current_page == "Login":
-    # If logged in and on login page, redirect to home
-    st.session_state.current_page = "Home"
-    st.rerun()
+    render_login()
+    st.stop()
 elif current_page == "Upload PDF":
+    # Check authentication
+    if not is_logged_in:
+        st.warning("🔐 **Authentication Required:** Please log in to access the upload page.")
+        with st.expander("🔑 Sign In", expanded=True):
+            email = st.text_input("Email", key="auth_email_upload")
+            password = st.text_input("Password", type="password", key="auth_password_upload")
+            
+            col_auth1, col_auth2 = st.columns([1, 1])
+            with col_auth1:
+                if st.button("Sign In", type="primary", use_container_width=True, key="signin_upload"):
+                    if email and password:
+                        success, message = authenticate_user(email, password)
+                        if success:
+                            st.success(message)
+                            st.rerun()
+                        else:
+                            st.error(message)
+                    else:
+                        st.warning("Please enter both email and password")
+        st.stop()
     render_pdf_upload()
     st.stop()
 else:
-    # Home page - Main functionality
-    # Fetch particulars from database (cached)
+    # Home page
+    # Fetch particulars (cached)
     try:
         with st.spinner("Loading..."):
             db_particulars = fetch_particulars()
@@ -165,25 +173,38 @@ else:
         st.info("💡 **Tip:** Check your internet connection and try refreshing the page.")
         st.stop()
 
-    # Fetch brand names from database (cached)
+    # Fetch brands (cached)
     try:
         db_brands = fetch_brands()
         if not db_brands:
             st.error("❌ No brands found in database. Please contact your administrator.")
             st.stop()
-        brand_name = st.selectbox(
-            "🏷️ Brand Name", 
-            db_brands, 
-            index=0,
-            help="Select the brand for your configuration"
-        )
+        
+        # Brand and location columns
+        col_brand, col_location = st.columns(2)
+        
+        with col_brand:
+            brand_name = st.selectbox(
+                "🏷️ Brand Name", 
+                db_brands, 
+                index=0,
+                help="Select the brand for your configuration"
+            )
+        
+        with col_location:
+            location_type = st.selectbox(
+                "📍 Location Type", 
+                ["indoor", "outdoor", "both"], 
+                index=0,
+                help="Select the location type for your configuration"
+            )
     except Exception as e:
         st.error(f"❌ Error fetching brands: {e}")
         st.info("💡 **Tip:** Check your internet connection and try refreshing the page.")
         st.stop()
 
     if particular == "Drivers":
-        render_driver_form(brand_name)
+        render_driver_form(brand_name, location_type)
     elif particular == "LED strips":
         st.info("🚧 **LED Strips Functionality**\n\nThis feature is coming soon. Stay tuned!")
 

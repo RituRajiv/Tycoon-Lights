@@ -107,20 +107,29 @@ def _filter_nearby_drivers(drivers, calculated_wattage, voltage, max_percentage_
     return [item['driver'] for item in nearby_drivers]
 
 
-def _find_driver_combinations(drivers, calculated_wattage, voltage, single_driver_available=False, max_combinations=3, tolerance_percent=10):
-    """Find combinations of drivers that sum up to near the calculated wattage, considering cost efficiency"""
+def _find_driver_combinations(drivers, calculated_wattage, voltage, location_type="both", single_driver_available=False, max_combinations=3, tolerance_percent=10):
+    """Find combinations of drivers that sum up to near the calculated wattage, considering cost efficiency and location type"""
     if not drivers or calculated_wattage <= 0:
         return []
     
-    # Filter drivers with matching voltage and reasonable wattage
+    # Filter drivers with matching voltage, location type, and reasonable wattage
     candidate_drivers = []
+    location_type_lower = location_type.lower() if location_type else "both"
+    
     for driver in drivers:
         driver_watt = driver.get('Watt') or driver.get('watt') or 0
         driver_volt = driver.get('Volt') or driver.get('volt') or 0
         driver_price = driver.get('Price') or driver.get('price') or 0
+        driver_place = driver.get('Place') or driver.get('place') or ''
         
-        # Only consider drivers with matching voltage and positive wattage
-        if driver_volt == voltage and driver_watt > 0:
+        # Check if location type matches (if not "both")
+        location_matches = True
+        if location_type_lower != "both":
+            driver_place_lower = driver_place.lower() if driver_place else ''
+            location_matches = driver_place_lower == location_type_lower
+        
+        # Only consider drivers with matching voltage, matching location type, and positive wattage
+        if driver_volt == voltage and driver_watt > 0 and location_matches:
             candidate_drivers.append({
                 'driver': driver,
                 'watt': driver_watt,
@@ -225,7 +234,7 @@ def _find_driver_combinations(drivers, calculated_wattage, voltage, single_drive
     return combinations[:max_combinations]
 
 
-def render_driver_form(brand_name):
+def render_driver_form(brand_name, location_type):
     """Render the driver form with all inputs and buttons"""
     default_length, default_is_feet, default_voltage_index, default_led_index, default_discount = _parse_editing_row()
     
@@ -368,7 +377,7 @@ def render_driver_form(brand_name):
         # Fetch drivers from database and show nearby drivers
         try:
             with st.spinner("Fetching drivers from database..."):
-                all_drivers = fetch_drivers()
+                all_drivers = fetch_drivers(location_type)
             
             if all_drivers:
                 # Filter to show only nearby drivers (within 50% of calculated wattage)
@@ -395,7 +404,7 @@ def render_driver_form(brand_name):
                         watt_diff = driver_watt - cached_wattage
                         
                         all_options_data.append({
-                            'Type': 'Single Driver',
+                            'Type': '1',
                             'Name/Combination': f"{driver_name} ({driver_watt}W)",
                             'Wattage': f"{driver_watt}W",
                             'Volt': f"{driver_volt}V",
@@ -406,8 +415,24 @@ def render_driver_form(brand_name):
                         })
                     
                     # Find and add driver combinations
-                    matching_voltage_drivers = [d for d in all_drivers 
-                                               if (d.get('Volt') or d.get('volt') or 0) == cached_voltage]
+                    # Filter by voltage and location type (place)
+                    location_type_lower = location_type.lower() if location_type else "both"
+                    matching_voltage_drivers = []
+                    for d in all_drivers:
+                        driver_volt = d.get('Volt') or d.get('volt') or 0
+                        driver_place = d.get('Place') or d.get('place') or ''
+                        
+                        # Check voltage match
+                        voltage_matches = driver_volt == cached_voltage
+                        
+                        # Check location type match (if not "both")
+                        location_matches = True
+                        if location_type_lower != "both":
+                            driver_place_lower = driver_place.lower() if driver_place else ''
+                            location_matches = driver_place_lower == location_type_lower
+                        
+                        if voltage_matches and location_matches:
+                            matching_voltage_drivers.append(d)
                     
                     # Check if single driver is available
                     single_driver_available = len(nearby_drivers) > 0
@@ -416,7 +441,8 @@ def render_driver_form(brand_name):
                         combinations = _find_driver_combinations(
                             matching_voltage_drivers, 
                             cached_wattage, 
-                            cached_voltage, 
+                            cached_voltage,
+                            location_type,
                             single_driver_available=single_driver_available,
                             max_combinations=5
                         )
@@ -443,7 +469,7 @@ def render_driver_form(brand_name):
                                 total_amp += driver_amp
                             
                             all_options_data.append({
-                                'Type': f'Combination ({len(combo["drivers"])} drivers)',
+                                'Type': str(len(combo["drivers"])),
                                 'Name/Combination': " + ".join(combination_parts),
                                 'Wattage': f"{combo['total_watt']:.2f}W",
                                 'Volt': f"{total_volt}V",
@@ -461,7 +487,7 @@ def render_driver_form(brand_name):
                     
                     # Display each row with button - responsive widths
                     for idx, option in enumerate(all_options_data):
-                        row_cols = st.columns([0.8, 2, 0.9, 0.7, 0.7, 0.7, 0.6, 1], gap="small")
+                        row_cols = st.columns([0.3, 2.5, 0.5, 0.5, 0.5, 0.7, 0.3, 0.5], gap="small")
                         
                         with row_cols[0]:
                             st.markdown(f"<div style='font-size: 1rem; padding: 0; margin: 0; line-height: 0.7; white-space: nowrap;'>{option['Type']}</div>", unsafe_allow_html=True)
