@@ -133,7 +133,64 @@ def _find_driver_combinations(drivers, calculated_wattage, voltage, location_typ
     tolerance = calculated_wattage * (tolerance_percent / 100)
     max_watt = calculated_wattage * 1.15
     
-    # Group drivers by normalized type name
+    # Special handling for 306W - prioritize specific combinations
+    if abs(calculated_wattage - 306) < 1:  # Allow small floating point differences
+        target_combinations = [
+            [300, 60],
+            [150, 100, 60],
+            [200, 60, 60],
+            [150, 200],
+            [100, 100, 150]
+        ]
+        
+        # Group drivers by wattage for quick lookup
+        drivers_by_watt = {}
+        for candidate in candidate_drivers:
+            watt = candidate['watt']
+            if watt not in drivers_by_watt:
+                drivers_by_watt[watt] = []
+            drivers_by_watt[watt].append(candidate)
+        
+        # Try to find exact combinations
+        for target_combo in target_combinations:
+            found_combo = []
+            combo_watts = []
+            total_combo_watt = 0
+            total_combo_price = 0
+            
+            for target_watt in target_combo:
+                if target_watt in drivers_by_watt and drivers_by_watt[target_watt]:
+                    # Use first available driver of this wattage
+                    driver_candidate = drivers_by_watt[target_watt][0]
+                    found_combo.append(driver_candidate['driver'])
+                    combo_watts.append(target_watt)
+                    total_combo_watt += target_watt
+                    total_combo_price += driver_candidate['price']
+                else:
+                    # Can't form this combination, skip it
+                    found_combo = None
+                    break
+            
+            if found_combo and len(found_combo) == len(target_combo):
+                diff = total_combo_watt - calculated_wattage
+                combinations.append({
+                    'drivers': found_combo,
+                    'watts': combo_watts,
+                    'total_watt': total_combo_watt,
+                    'diff': diff,
+                    'percentage_diff': (diff / calculated_wattage * 100) if calculated_wattage > 0 else 0,
+                    'total_price': total_combo_price,
+                    'driver_count': len(found_combo),
+                    'driver_type': 'mixed',
+                    'priority': True  # Mark as priority combination
+                })
+        
+        # If we found priority combinations, return them sorted
+        if combinations:
+            combinations.sort(key=lambda x: (x['driver_count'], x['diff'], x['total_price']))
+            return combinations[:max_combinations]
+    
+    # Group drivers by normalized type name for same-type combinations
     drivers_by_type = {}
     for candidate in candidate_drivers:
         driver_type = candidate['type']
@@ -143,6 +200,7 @@ def _find_driver_combinations(drivers, calculated_wattage, voltage, location_typ
         
         drivers_by_type[driver_type].append(candidate)
     
+    # Find combinations within same driver type
     for driver_type, type_drivers in drivers_by_type.items():
         for i in range(len(type_drivers)):
             # Allow same driver combinations (i == j) and different driver combinations (i != j)
@@ -184,11 +242,12 @@ def _find_driver_combinations(drivers, calculated_wattage, voltage, location_typ
                                 'driver_type': driver_type
                             })
         
+        # Check for 3-driver combinations when no single driver available OR wattage > 500
         if not single_driver_available or calculated_wattage > 500:
             if len(type_drivers) >= 3:
                 for i in range(len(type_drivers)):
-                    for j in range(i + 1, len(type_drivers)):
-                        for k in range(j + 1, len(type_drivers)):
+                    for j in range(i, len(type_drivers)):  # Allow same driver (i == j)
+                        for k in range(j, len(type_drivers)):  # Allow same driver (j == k)
                             total_watt = (type_drivers[i]['watt'] + 
                                          type_drivers[j]['watt'] + 
                                          type_drivers[k]['watt'])
@@ -196,7 +255,8 @@ def _find_driver_combinations(drivers, calculated_wattage, voltage, location_typ
                             if total_watt >= calculated_wattage:
                                 diff = total_watt - calculated_wattage
                                 
-                                if diff <= calculated_wattage * 0.05 and total_watt <= max_watt:
+                                # Relaxed condition: allow up to 15% over wattage (max_watt) OR within 10% diff
+                                if (diff <= calculated_wattage * 0.10 or total_watt <= max_watt) and total_watt <= max_watt:
                                     total_price = type_drivers[i]['price'] + type_drivers[j]['price'] + type_drivers[k]['price']
                                     
                                     combinations.append({
@@ -218,9 +278,103 @@ def _find_driver_combinations(drivers, calculated_wattage, voltage, location_typ
                                         'driver_type': driver_type
                                     })
     
-    combinations.sort(key=lambda x: (x['driver_count'], x['diff'], x['total_price']))
+    # Also find cross-type combinations (combinations across different driver types)
+    # This allows mixing different driver types
+    for i in range(len(candidate_drivers)):
+        for j in range(i, len(candidate_drivers)):
+            # Skip if same type (already handled above)
+            if candidate_drivers[i]['type'] == candidate_drivers[j]['type']:
+                continue
+            
+            total_watt = candidate_drivers[i]['watt'] + candidate_drivers[j]['watt']
+            
+            if total_watt >= calculated_wattage:
+                diff = total_watt - calculated_wattage
+                
+                if diff <= tolerance or total_watt <= max_watt:
+                    total_price = candidate_drivers[i]['price'] + candidate_drivers[j]['price']
+                    
+                    if single_driver_available:
+                        if diff <= calculated_wattage * 0.10 or total_watt <= max_watt:
+                            combinations.append({
+                                'drivers': [candidate_drivers[i]['driver'], candidate_drivers[j]['driver']],
+                                'watts': [candidate_drivers[i]['watt'], candidate_drivers[j]['watt']],
+                                'total_watt': total_watt,
+                                'diff': diff,
+                                'percentage_diff': (diff / calculated_wattage * 100) if calculated_wattage > 0 else 0,
+                                'total_price': total_price,
+                                'driver_count': 2,
+                                'driver_type': 'mixed'
+                            })
+                    else:
+                        combinations.append({
+                            'drivers': [candidate_drivers[i]['driver'], candidate_drivers[j]['driver']],
+                            'watts': [candidate_drivers[i]['watt'], candidate_drivers[j]['watt']],
+                            'total_watt': total_watt,
+                            'diff': diff,
+                            'percentage_diff': (diff / calculated_wattage * 100) if calculated_wattage > 0 else 0,
+                            'total_price': total_price,
+                            'driver_count': 2,
+                            'driver_type': 'mixed'
+                        })
     
-    return combinations[:max_combinations]
+    # Find 3-driver cross-type combinations
+    if not single_driver_available or calculated_wattage > 500:
+        for i in range(len(candidate_drivers)):
+            for j in range(i, len(candidate_drivers)):
+                for k in range(j, len(candidate_drivers)):
+                    # Skip if all same type (already handled above)
+                    if (candidate_drivers[i]['type'] == candidate_drivers[j]['type'] == candidate_drivers[k]['type']):
+                        continue
+                    
+                    total_watt = (candidate_drivers[i]['watt'] + 
+                                 candidate_drivers[j]['watt'] + 
+                                 candidate_drivers[k]['watt'])
+                    
+                    if total_watt >= calculated_wattage:
+                        diff = total_watt - calculated_wattage
+                        
+                        if (diff <= calculated_wattage * 0.10 or total_watt <= max_watt) and total_watt <= max_watt:
+                            total_price = candidate_drivers[i]['price'] + candidate_drivers[j]['price'] + candidate_drivers[k]['price']
+                            
+                            combinations.append({
+                                'drivers': [
+                                    candidate_drivers[i]['driver'],
+                                    candidate_drivers[j]['driver'],
+                                    candidate_drivers[k]['driver']
+                                ],
+                                'watts': [
+                                    candidate_drivers[i]['watt'],
+                                    candidate_drivers[j]['watt'],
+                                    candidate_drivers[k]['watt']
+                                ],
+                                'total_watt': total_watt,
+                                'diff': diff,
+                                'percentage_diff': (diff / calculated_wattage * 100) if calculated_wattage > 0 else 0,
+                                'total_price': total_price,
+                                'driver_count': 3,
+                                'driver_type': 'mixed'
+                            })
+    
+    # Remove duplicates based on driver combination (same drivers in same order)
+    seen_combos = set()
+    unique_combinations = []
+    for combo in combinations:
+        # Create a signature based on sorted watts to identify duplicates
+        combo_signature = tuple(sorted(combo['watts']))
+        if combo_signature not in seen_combos:
+            seen_combos.add(combo_signature)
+            unique_combinations.append(combo)
+    
+    # Sort: priority combinations first, then by driver_count, diff, and price
+    unique_combinations.sort(key=lambda x: (
+        not x.get('priority', False),  # Priority combinations first
+        x['driver_count'], 
+        x['diff'], 
+        x['total_price']
+    ))
+    
+    return unique_combinations[:max_combinations]
 
 
 def render_driver_form(brand_name, location_type):
@@ -355,115 +509,118 @@ def render_driver_form(brand_name, location_type):
             
             if all_drivers:
                 nearby_drivers = _filter_nearby_drivers(all_drivers, cached_wattage, cached_voltage, max_percentage_diff=50)
-                
+                nearest_driver = None
                 if nearby_drivers:
                     nearest_driver, diff = _find_nearest_driver(nearby_drivers, cached_wattage, cached_voltage)
+                
+                calc_length = st.session_state.get('calc_converted_length', 0)
+                requires_multiple_drivers = False
+                if cached_voltage == 12 and calc_length > 5:
+                    requires_multiple_drivers = True
+                elif cached_voltage == 24 and calc_length > 10:
+                    requires_multiple_drivers = True
+                
+                # Get matching voltage drivers for combination search
+                location_type_lower = location_type.lower() if location_type else "both"
+                matching_voltage_drivers = []
+                for d in all_drivers:
+                    driver_volt = d.get('Volt') or d.get('volt') or 0
+                    driver_place = d.get('Place') or d.get('place') or ''
                     
-                    st.markdown(f"<h4 style='font-size: 1rem; margin-bottom: 0.5rem;'>📋 Available Drivers & Combinations ({cached_voltage}V)</h4>", unsafe_allow_html=True)
-                    st.caption("Select a driver option below and add it to your table")
+                    voltage_matches = driver_volt == cached_voltage
+                    location_matches = True
+                    if location_type_lower != "both":
+                        driver_place_lower = driver_place.lower() if driver_place else ''
+                        location_matches = driver_place_lower == location_type_lower
                     
-                    calc_length = st.session_state.get('calc_converted_length', 0)
-                    requires_multiple_drivers = False
-                    if cached_voltage == 12 and calc_length > 5:
-                        requires_multiple_drivers = True
-                    elif cached_voltage == 24 and calc_length > 10:
-                        requires_multiple_drivers = True
+                    if voltage_matches and location_matches:
+                        matching_voltage_drivers.append(d)
+                
+                single_driver_available = len(nearby_drivers) > 0 and not requires_multiple_drivers
+                
+                # Always search for combinations, even when no single drivers are available
+                all_options_data = []
+                
+                # Add single drivers if available and not requiring multiple
+                if nearby_drivers and not requires_multiple_drivers:
+                    for driver in nearby_drivers:
+                        driver_watt = driver.get('Watt') or driver.get('watt') or 0
+                        driver_volt = driver.get('Volt') or driver.get('volt') or 0
+                        driver_amp = driver.get('Amp') or driver.get('amp') or 0
+                        driver_name = driver.get('Name') or driver.get('name') or '-'
+                        driver_price = driver.get('Price') or driver.get('price')
+                        
+                        is_nearest = driver == nearest_driver
+                        watt_diff = driver_watt - cached_wattage
+                        
+                        option_entry = {
+                            'Type': '1',
+                            'Name/Combination': f"{driver_name} ({driver_watt}W)",
+                            'Wattage': f"{driver_watt}W",
+                            'Volt': f"{driver_volt}V",
+                            'Amp': f"{driver_amp}A",
+                            'Price': f"₹{driver_price}" if driver_price else '-',
+                            'Best': '⭐' if is_nearest else '',
+                            '_sort_diff': watt_diff
+                        }
+                        all_options_data.append(option_entry)
+                
+                # Search for combinations (always, even if no single drivers)
+                if matching_voltage_drivers:
+                    combinations = _find_driver_combinations(
+                        matching_voltage_drivers, 
+                        cached_wattage, 
+                        cached_voltage,
+                        location_type,
+                        single_driver_available=single_driver_available,
+                        max_combinations=10
+                    )
                     
-                    all_options_data = []
-                    
-                    if not requires_multiple_drivers:
-                        for driver in nearby_drivers:
+                    for idx, combo in enumerate(combinations, 1):
+                        total_price = 0
+                        total_volt = None
+                        total_amp = 0
+                        
+                        combination_parts = []
+                        for driver in combo['drivers']:
+                            driver_name = driver.get('Name') or driver.get('name') or '-'
                             driver_watt = driver.get('Watt') or driver.get('watt') or 0
                             driver_volt = driver.get('Volt') or driver.get('volt') or 0
                             driver_amp = driver.get('Amp') or driver.get('amp') or 0
-                            driver_name = driver.get('Name') or driver.get('name') or '-'
-                            driver_price = driver.get('Price') or driver.get('price')
+                            driver_price = driver.get('Price') or driver.get('price') or 0
                             
-                            is_nearest = driver == nearest_driver
-                            watt_diff = driver_watt - cached_wattage
-                            
-                            option_entry = {
-                                'Type': '1',
-                                'Name/Combination': f"{driver_name} ({driver_watt}W)",
-                                'Wattage': f"{driver_watt}W",
-                                'Volt': f"{driver_volt}V",
-                                'Amp': f"{driver_amp}A",
-                                'Price': f"₹{driver_price}" if driver_price else '-',
-                                'Best': '⭐' if is_nearest else '',
-                                '_sort_diff': watt_diff
-                            }
-                            all_options_data.append(option_entry)
-                    
-                    location_type_lower = location_type.lower() if location_type else "both"
-                    matching_voltage_drivers = []
-                    for d in all_drivers:
-                        driver_volt = d.get('Volt') or d.get('volt') or 0
-                        driver_place = d.get('Place') or d.get('place') or ''
+                            combination_parts.append(f"{driver_name} ({driver_watt}W)")
+                            total_price += driver_price
+                            if total_volt is None:
+                                total_volt = driver_volt
+                            total_amp += driver_amp
                         
-                        voltage_matches = driver_volt == cached_voltage
-                        location_matches = True
-                        if location_type_lower != "both":
-                            driver_place_lower = driver_place.lower() if driver_place else ''
-                            location_matches = driver_place_lower == location_type_lower
-                        
-                        if voltage_matches and location_matches:
-                            matching_voltage_drivers.append(d)
+                        option_entry = {
+                            'Type': str(len(combo["drivers"])),
+                            'Name/Combination': " + ".join(combination_parts),
+                            'Wattage': f"{combo['total_watt']:.2f}W",
+                            'Volt': f"{total_volt}V",
+                            'Amp': f"{total_amp:.2f}A",
+                            'Price': f"₹{total_price:.2f}" if total_price > 0 else '-',
+                            'Best': '🏆' if idx == 1 else '',
+                            '_sort_diff': combo['diff']
+                        }
+                        all_options_data.append(option_entry)
+                
+                all_options_data.sort(key=lambda x: x['_sort_diff'])
+                
+                # Display results
+                if len(all_options_data) > 0:
+                    st.markdown(f"<h4 style='font-size: 1rem; margin-bottom: 0.5rem;'>📋 Available Drivers & Combinations ({cached_voltage}V)</h4>", unsafe_allow_html=True)
+                    st.caption("Select a driver option below and add it to your table")
+                    st.markdown("<h4 style='font-size: 1rem; margin-bottom: 0.5rem;'>🎯 Driver Options</h4>", unsafe_allow_html=True)
                     
-                    single_driver_available = len(nearby_drivers) > 0 and not requires_multiple_drivers
-                    
-                    if matching_voltage_drivers:
-                        combinations = _find_driver_combinations(
-                            matching_voltage_drivers, 
-                            cached_wattage, 
-                            cached_voltage,
-                            location_type,
-                            single_driver_available=single_driver_available,
-                            max_combinations=10
-                        )
-                        
-                        for idx, combo in enumerate(combinations, 1):
-                            total_price = 0
-                            total_volt = None
-                            total_amp = 0
-                            
-                            combination_parts = []
-                            for driver in combo['drivers']:
-                                driver_name = driver.get('Name') or driver.get('name') or '-'
-                                driver_watt = driver.get('Watt') or driver.get('watt') or 0
-                                driver_volt = driver.get('Volt') or driver.get('volt') or 0
-                                driver_amp = driver.get('Amp') or driver.get('amp') or 0
-                                driver_price = driver.get('Price') or driver.get('price') or 0
-                                
-                                combination_parts.append(f"{driver_name} ({driver_watt}W)")
-                                total_price += driver_price
-                                if total_volt is None:
-                                    total_volt = driver_volt
-                                total_amp += driver_amp
-                            
-                            option_entry = {
-                                'Type': str(len(combo["drivers"])),
-                                'Name/Combination': " + ".join(combination_parts),
-                                'Wattage': f"{combo['total_watt']:.2f}W",
-                                'Volt': f"{total_volt}V",
-                                'Amp': f"{total_amp:.2f}A",
-                                'Price': f"₹{total_price:.2f}" if total_price > 0 else '-',
-                                'Best': '🏆' if idx == 1 else '',
-                                '_sort_diff': combo['diff']
-                            }
-                            all_options_data.append(option_entry)
-                    
-                    all_options_data.sort(key=lambda x: x['_sort_diff'])
-                    
-                    if requires_multiple_drivers and len(all_options_data) == 0:
-                        st.error(f"❌ **No driver combinations found:** Multiple drivers are required for this length and voltage, but no suitable combinations were found. Please check available drivers in the database.")
-                    elif requires_multiple_drivers and len(all_options_data) > 0:
+                    if requires_multiple_drivers:
                         all_options_data = [opt for opt in all_options_data if opt['Type'] != '1']
                         if len(all_options_data) == 0:
                             st.error(f"❌ **No driver combinations found:** Multiple drivers are required for this length and voltage, but no suitable combinations were found. Please check available drivers in the database.")
                     
                     if len(all_options_data) > 0:
-                        st.markdown("<h4 style='font-size: 1rem; margin-bottom: 0.5rem;'>🎯 Driver Options</h4>", unsafe_allow_html=True)
-                        
                         for idx, option in enumerate(all_options_data):
                             row_cols = st.columns([0.3, 2.5, 0.5, 0.5, 0.5, 0.7, 0.3, 0.5], gap="small")
                             
@@ -512,7 +669,10 @@ def render_driver_form(brand_name, location_type):
                             if idx < len(all_options_data) - 1:
                                 st.markdown("<hr style='margin: 0.05rem 0; border-color: #334155;'>", unsafe_allow_html=True)
                 else:
+                    # No single drivers and no combinations found
                     st.warning(f"⚠️ No drivers found with {cached_voltage}V voltage equal to or above calculated wattage ({cached_wattage}W).")
+                    
+                    # Try to find nearest single driver for reference
                     nearest_driver = None
                     min_diff = float('inf')
                     
