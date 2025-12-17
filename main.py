@@ -130,9 +130,50 @@ else:
             index=0,
             help="Choose the type of component you want to configure"
         )
+    except ValueError as e:
+        # Configuration errors (missing env vars, invalid URL format)
+        st.error(f"❌ Configuration Error: {e}")
+        st.info("""
+        **To fix this issue:**
+        
+        **For Local Development:**
+        1. Create a `.env` file in the project root
+        2. Add your Supabase credentials:
+        ```
+        SUPABASE_URL=https://ldatmittxoudwpcgdcbc.supabase.co
+        SUPABASE_KEY=your-anon-key
+        ```
+        
+        **For Streamlit Cloud:**
+        1. Go to your app's Settings (⋮ menu → Settings)
+        2. Navigate to "Secrets" tab
+        3. Add your Supabase credentials in TOML format
+        """)
+        st.stop()
+    except ConnectionError as e:
+        # DNS/Network errors
+        st.error(f"❌ Connection Error: {e}")
+        st.info("💡 **Tip:** Check your internet connection and verify your Supabase URL is correct.")
+        st.stop()
     except Exception as e:
-        st.error(f"❌ Error fetching particulars: {e}")
-        st.info("💡 **Tip:** Check your internet connection and try refreshing the page.")
+        # Other errors
+        error_msg = str(e)
+        if "Name or service not known" in error_msg or "[Errno -2]" in error_msg:
+            st.error(f"❌ DNS Resolution Error: Cannot resolve Supabase hostname")
+            st.info("""
+            **This usually means:**
+            1. Your SUPABASE_URL might be incorrect
+            2. Your internet connection is down
+            3. The Supabase project might be paused or deleted
+            
+            **To fix:**
+            - Verify your SUPABASE_URL in `.env` file (local) or Streamlit Secrets (cloud)
+            - Check your internet connection
+            - Verify your Supabase project is active
+            """)
+        else:
+            st.error(f"❌ Error fetching particulars: {e}")
+            st.info("💡 **Tip:** Check your internet connection and try refreshing the page.")
         st.stop()
 
     # Fetch brands (cached) - optimized for mobile
@@ -160,9 +201,50 @@ else:
                 index=0,
                 help="Select the location type for your configuration"
             )
+    except ValueError as e:
+        # Configuration errors (missing env vars, invalid URL format)
+        st.error(f"❌ Configuration Error: {e}")
+        st.info("""
+        **To fix this issue:**
+        
+        **For Local Development:**
+        1. Create a `.env` file in the project root
+        2. Add your Supabase credentials:
+        ```
+        SUPABASE_URL=https://ldatmittxoudwpcgdcbc.supabase.co
+        SUPABASE_KEY=your-anon-key
+        ```
+        
+        **For Streamlit Cloud:**
+        1. Go to your app's Settings (⋮ menu → Settings)
+        2. Navigate to "Secrets" tab
+        3. Add your Supabase credentials in TOML format
+        """)
+        st.stop()
+    except ConnectionError as e:
+        # DNS/Network errors
+        st.error(f"❌ Connection Error: {e}")
+        st.info("💡 **Tip:** Check your internet connection and verify your Supabase URL is correct.")
+        st.stop()
     except Exception as e:
-        st.error(f"❌ Error fetching brands: {e}")
-        st.info("💡 **Tip:** Check your internet connection and try refreshing the page.")
+        # Other errors
+        error_msg = str(e)
+        if "Name or service not known" in error_msg or "[Errno -2]" in error_msg:
+            st.error(f"❌ DNS Resolution Error: Cannot resolve Supabase hostname")
+            st.info("""
+            **This usually means:**
+            1. Your SUPABASE_URL might be incorrect
+            2. Your internet connection is down
+            3. The Supabase project might be paused or deleted
+            
+            **To fix:**
+            - Verify your SUPABASE_URL in `.env` file (local) or Streamlit Secrets (cloud)
+            - Check your internet connection
+            - Verify your Supabase project is active
+            """)
+        else:
+            st.error(f"❌ Error fetching brands: {e}")
+            st.info("💡 **Tip:** Check your internet connection and try refreshing the page.")
         st.stop()
 
     if particular == "Drivers":

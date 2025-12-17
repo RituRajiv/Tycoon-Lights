@@ -59,6 +59,14 @@ def _validate_env_vars():
             "See README.md for setup instructions."
         )
     
+    # Validate URL format
+    if not supabase_url.startswith(('http://', 'https://')):
+        raise ValueError(
+            f"SUPABASE_URL must start with http:// or https://. "
+            f"Current value appears to be invalid. "
+            f"Expected format: https://ldatmittxoudwpcgdcbc.supabase.co"
+        )
+    
     return supabase_url, supabase_key
 
 def check_supabase_config():
@@ -69,12 +77,56 @@ def check_supabase_config():
     except ValueError as e:
         return False, str(e)
 
+def test_supabase_connection():
+    """Test the Supabase connection and return diagnostic information"""
+    try:
+        supabase_url, supabase_key = _validate_env_vars()
+        
+        # Extract hostname for DNS test
+        import re
+        url_match = re.search(r'https?://([^/]+)', supabase_url)
+        hostname = url_match.group(1) if url_match else None
+        
+        # Try to create client and make a simple request
+        try:
+            client = create_client(supabase_url, supabase_key)
+            # Try a simple query to test connection
+            response = client.table('Particulars').select('*').limit(1).execute()
+            return True, f"Connection successful to {hostname}"
+        except Exception as e:
+            error_msg = str(e)
+            if "Name or service not known" in error_msg or "[Errno -2]" in error_msg:
+                return False, f"DNS resolution failed for hostname '{hostname}'. Check your SUPABASE_URL."
+            return False, f"Connection failed: {error_msg}"
+    except ValueError as e:
+        return False, f"Configuration error: {str(e)}"
+    except Exception as e:
+        return False, f"Unexpected error: {str(e)}"
+
 def _get_client():
     """Get unauthenticated client (for reads)"""
     global _client
     if _client is None:
         supabase_url, supabase_key = _validate_env_vars()
-        _client = create_client(supabase_url, supabase_key)
+        try:
+            _client = create_client(supabase_url, supabase_key)
+        except Exception as e:
+            # Provide more helpful error messages for common issues
+            error_msg = str(e)
+            if "Name or service not known" in error_msg or "[Errno -2]" in error_msg:
+                # Extract hostname from URL for better error message
+                import re
+                url_match = re.search(r'https?://([^/]+)', supabase_url)
+                hostname = url_match.group(1) if url_match else "unknown"
+                raise ConnectionError(
+                    f"DNS resolution failed for Supabase hostname '{hostname}'. "
+                    f"Please check:\n"
+                    f"1. Your SUPABASE_URL is correct (should be like: https://xxxxx.supabase.co)\n"
+                    f"2. Your internet connection is working\n"
+                    f"3. The Supabase project is active and accessible\n"
+                    f"Original error: {error_msg}"
+                )
+            raise
     return _client
 
 def _get_authenticated_client():
